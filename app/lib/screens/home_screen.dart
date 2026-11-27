@@ -353,37 +353,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildInternetIndicator() {
-    final available = _internetAvailable;
-    final color = available == null
-        ? const Color(0xFF8792A5)
-        : available
-            ? const Color(0xFF20C982)
-            : const Color(0xFFE34C5B);
-    final icon = available == null
-        ? Icons.sync_rounded
-        : available
-            ? Icons.check_rounded
-            : Icons.close_rounded;
-    final label = available == null
-        ? (_fa ? 'در حال بررسی اینترنت' : 'Checking internet')
-        : available
-            ? (_fa ? 'اینترنت در دسترس است' : 'Internet available')
-            : (_fa ? 'اینترنت در دسترس نیست' : 'Internet unavailable');
-    return Tooltip(
-      message: label,
-      child: Container(
-        width: 27,
-        height: 27,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color.withValues(alpha: .16),
-          border: Border.all(color: color, width: 1.2),
-        ),
-        child: Icon(icon, color: color, size: 17),
-      ),
-    );
-  }
 
   void _onEngineStatus(V2RayStatus status) {
     if (!mounted) return;
