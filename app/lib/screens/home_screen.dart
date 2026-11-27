@@ -210,25 +210,39 @@ class _HomeScreenState extends State<HomeScreen>
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF17263B),
+        color: _lightTheme ? const Color(0xFFE3F1FF) : const Color(0xFF17263B),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF314A70)),
+        border: Border.all(color: _lightTheme ? const Color(0xFF8CB9E7) : const Color(0xFF314A70)),
       ),
       alignment: Alignment.center,
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         child: Text(items[index].message, key: ValueKey(items[index].id), maxLines: 1,
           overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
-          style: const TextStyle(color: Color(0xFF75D9F2), fontSize: 11, fontWeight: FontWeight.w600)),
+          style: TextStyle(color: _lightTheme ? const Color(0xFF1265A0) : const Color(0xFF75D9F2), fontSize: 11, fontWeight: FontWeight.w600)),
       ),
     );
   }
 
+  Widget _buildAdPlaceholder() => Container(
+        height: 104,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: _lightTheme ? const Color(0xFFE8F1FC) : const Color(0xFF141B29),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: _lightTheme ? const Color(0xFFB9D0EB) : const Color(0xFF344A6B), width: 1.2),
+        ),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(Icons.campaign_rounded, color: const Color(0xFF69A0FF), size: 27),
+          const SizedBox(height: 5),
+          Text(_fa ? 'جایگاه تبلیغات بنری' : 'Banner advertisement',
+              style: TextStyle(color: _lightTheme ? const Color(0xFF49688F) : const Color(0xFF9EAFCA), fontSize: 11, fontWeight: FontWeight.w700)),
+        ]),
+      );
+
   Widget _buildHomeAdPlacement() {
     final content = _homeContent;
-    if (content == null) {
-      return const SizedBox(height: 104);
-    }
+    if (content == null) return _buildAdPlaceholder();
     if (content.adMode == 'network') {
       final smartLink = (content.networkCode ?? '').trim();
       final smartLinkUri = Uri.tryParse(smartLink);
@@ -292,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       );
     }
-    if (content.ads.isEmpty) return const SizedBox.shrink();
+    if (content.ads.isEmpty) return _buildAdPlaceholder();
     final ad = content.ads[_homeAdIndex % content.ads.length];
     return SizedBox(
       height: 104,
@@ -994,10 +1008,6 @@ class _HomeScreenState extends State<HomeScreen>
                     letterSpacing: -.8,
                   ),
                 ),
-                if (_homeContent?.announcements.isNotEmpty == true) ...[
-                  const SizedBox(height: 9),
-                  _buildAnnouncementBar(),
-                ],
                 if (_connected) ...[
                   const SizedBox(height: 7),
                   Column(
@@ -1032,8 +1042,8 @@ class _HomeScreenState extends State<HomeScreen>
                       onTap: _busy ? null : _toggleConnection,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 260),
-                        width: 148,
-                        height: 82,
+                        width: 132,
+                        height: 88,
                         padding: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(48),
@@ -1065,8 +1075,8 @@ class _HomeScreenState extends State<HomeScreen>
                               ? Alignment.centerRight
                               : Alignment.centerLeft,
                           child: Container(
-                            width: 66,
-                            height: 66,
+                            width: 70,
+                            height: 70,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: _lightTheme ? const Color(0xFFFFFFFF) : const Color(0xFFECEBF0),
@@ -1104,6 +1114,10 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 const SizedBox(height: 16),
                 _buildHomeAdPlacement(),
+                if (_homeContent?.announcements.isNotEmpty == true) ...[
+                  const SizedBox(height: 10),
+                  _buildAnnouncementBar(),
+                ],
                 const SizedBox(height: 14),
                 Container(
                   width: double.infinity,
