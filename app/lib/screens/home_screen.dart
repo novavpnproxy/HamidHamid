@@ -133,11 +133,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   String _formatAutoDisconnect(int totalSeconds) {
-    final hours = totalSeconds ~/ 3600;
-    final minutes = (totalSeconds % 3600) ~/ 60;
+    final minutes = totalSeconds ~/ 60;
     final seconds = totalSeconds % 60;
-    return '${hours.toString().padLeft(2, '0')}:'
-        '${minutes.toString().padLeft(2, '0')}:'
+    return '${minutes.toString().padLeft(2, '0')}:'
         '${seconds.toString().padLeft(2, '0')}';
   }
 
@@ -703,7 +701,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         textDirection: TextDirection.ltr,
                         style: const TextStyle(
                           color: Color(0xFFFFC34D),
-                          fontSize: 18,
+                          fontSize: 22,
                           fontWeight: FontWeight.w800,
                           fontFeatures: [FontFeature.tabularFigures()],
                         ),
@@ -720,8 +718,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       onTap: _busy ? null : _toggleConnection,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 260),
-                        width: 164,
-                        height: 76,
+                        width: 210,
+                        height: 66,
                         padding: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(48),
@@ -753,8 +751,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               ? Alignment.centerRight
                               : Alignment.centerLeft,
                           child: Container(
-                            width: 66,
-                            height: 66,
+                            width: 56,
+                            height: 56,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: _lightTheme ? const Color(0xFFFFFFFF) : const Color(0xFFECEBF0),

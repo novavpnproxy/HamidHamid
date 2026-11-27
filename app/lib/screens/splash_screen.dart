@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../screens/home_screen.dart';
+import '../widgets/nova_animations.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -31,8 +32,8 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _controller.forward();
 
-    // Keep the branded launch screen visible for 3.5 seconds.
-    _timer = Timer(const Duration(milliseconds: 3500), () {
+    // Keep the branded launch screen visible for 4 seconds.
+    _timer = Timer(const Duration(seconds: 4), () {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -73,48 +74,74 @@ class _SplashScreenState extends State<SplashScreen>
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Image.asset(
-                        'assets/brand/nova_logo_dark.jpg',
-                        width: 206,
-                        height: 206,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(
-                          Icons.shield_outlined,
-                          size: 164,
-                          color: Color(0xFF3B82F6),
+                      const NovaParticleLogo(size: 224),
+                      const SizedBox(height: 30),
+                      ShaderMask(
+                        blendMode: BlendMode.srcIn,
+                        shaderCallback: (bounds) => const LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Color(0xFF22D3EE),
+                            Color(0xFF3B82F6),
+                            Color(0xFF9B5DE5),
+                          ],
+                        ).createShader(bounds),
+                        child: const Text(
+                          'NOVA VPN',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 4,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Color(0xAA22D3EE),
+                                blurRadius: 18,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      SizedBox(height: 30),
-                      Text(
-                        'NOVA VPN',
+                      const SizedBox(height: 10),
+                      const Text(
+                        'JEYRAN GROUP',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 4,
-                          color: Color(0xFFF2F5FA),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 5,
+                          color: Color(0xFF39D6C8),
+                          shadows: [
+                            Shadow(
+                              color: Color(0x9939D6C8),
+                              blurRadius: 12,
+                            ),
+                          ],
                         ),
                       ),
-                      SizedBox(height: 14),
-                      SizedBox(height: 18),
-                      Text(
+                      const SizedBox(height: 14),
+                      const Text(
                         'اتصال هوشمند، سریع و امن',
                         textAlign: TextAlign.center,
                         textDirection: TextDirection.rtl,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
-                          color: Color(0xFFD4DCE8),
+                          color: Color(0xFF54C9F4),
                         ),
                       ),
-                      SizedBox(height: 34),
-                      SizedBox(
+                      const SizedBox(height: 34),
+                      const SizedBox(
                         width: 92,
                         child: LinearProgressIndicator(
                           minHeight: 3,
                           borderRadius: BorderRadius.all(Radius.circular(8)),
                           backgroundColor: Color(0xFF1D2B49),
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF35A8FF)),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFF35A8FF),
+                          ),
                         ),
                       ),
                     ],

@@ -45,15 +45,6 @@ Do not commit real credentials or put them in the Android application. Render fr
 
 Country metadata is shown to app clients only when the owner explicitly marks it verified. Protocol/profile format checks are syntactic and do not establish that a server is reachable or operational.
 
-## Vox partner integration
-
-The backend exposes public location metadata at `GET /api/v1/vox/locations?protocol=vless` and an authenticated config route at `GET /api/v1/vox/config?location=de-frankfurt&protocol=vless`. The first request for a NOVA device creates its Vox user idempotently (`nova_<device_id>`); later config requests fetch a fresh profile from Vox. The Vox partner key is read only from `VOX_API_KEY` on the server and must never be included in the APK or logs. Configure it in the hosting provider's secret environment settings. This first integration intentionally exposes VLESS only because the currently pinned Android engine is Xray-based; WireGuard and AmneziaWG require a separately integrated Android engine before the app can consume those profiles.
-
-- `GET /api/v1/vox/locations?protocol=vless` — public metadata list of VLESS-capable Vox locations (contains no credentials).
-- `GET /api/v1/vox/config?location=<location-id>&protocol=vless` — authenticated fresh VLESS config for the calling NOVA installation; response is `no-store`.
-
-Each distinct NOVA installation/device identity maps to one Vox trial account. Vox's trial limits still apply (10 simultaneous users, 20 total created, 2 devices per user, 10 GB per user, 100 GB total). The route has not yet been exercised against the live Vox account; configure the key and run an end-to-end test before enabling it in the app.
-
 ## Production blockers
 
 Before public launch, add stronger abuse controls and rate limiting at the reverse proxy, database backups and migrations, monitoring without secret logging, and independent security review. Configure the app with the deployed HTTPS API URL using `--dart-define=API_BASE_URL=...`. Never embed administrator credentials or a shared API secret in the APK. A profile delivered to a device can be extracted from that device. Validate real traffic and throughput on physical Android devices before claiming the VPN is production-ready.
