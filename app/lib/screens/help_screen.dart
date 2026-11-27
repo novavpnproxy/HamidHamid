@@ -77,7 +77,7 @@ class NovaHelpScreen extends StatelessWidget {
                     childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     iconColor: const Color(0xFF4D91FF),
                     collapsedIconColor: muted,
-                    title: Text((e.key + 1).toString() + '. ' + e.value[0], style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w700)),
+                    title: Text('${e.key + 1}. ${e.value[0]}', style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w700)),
                     children: [
                       Align(alignment: AlignmentDirectional.centerStart, child: Text(e.value[1], style: TextStyle(color: muted, fontSize: 12, height: 1.7))),
                       if (e.key == 11) Align(alignment: AlignmentDirectional.centerStart, child: TextButton.icon(onPressed: () => contact(context), icon: const Icon(Icons.mail_outline_rounded, size: 17), label: const Text('mynovavpnproxy@gmail.com'))),
