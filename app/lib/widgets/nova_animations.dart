@@ -122,7 +122,7 @@ class _NovaParticlesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _NovaParticlesPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.lightTheme != lightTheme;
+      oldDelegate.progress != progress;
 }
 
 /// Bright, lightweight orbital animation for the connecting screen.
