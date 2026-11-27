@@ -1035,8 +1035,8 @@ class _HomeScreenState extends State<HomeScreen>
                       onTap: _busy ? null : _toggleConnection,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 260),
-                        width: 132,
-                        height: 88,
+                        width: 148,
+                        height: 76,
                         padding: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(48),
@@ -1068,8 +1068,8 @@ class _HomeScreenState extends State<HomeScreen>
                               ? Alignment.centerRight
                               : Alignment.centerLeft,
                           child: Container(
-                            width: 70,
-                            height: 70,
+                            width: 62,
+                            height: 62,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: _lightTheme ? const Color(0xFFFFFFFF) : const Color(0xFFECEBF0),
