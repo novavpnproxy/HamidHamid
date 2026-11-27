@@ -111,51 +111,6 @@ class _NovaParticlesPainter extends CustomPainter {
     }
 
 
-    // Four luminous neon rings orbit the NOVA core at different angles.
-    const ringColors = <Color>[
-      Color(0xFF28D7FF),
-      Color(0xFF477BFF),
-      Color(0xFFB35CFF),
-      Color(0xFFFF55B8),
-    ];
-    for (var i = 0; i < ringColors.length; i++) {
-      canvas.save();
-      canvas.translate(center.dx, center.dy);
-      canvas.rotate(rotation * (i.isEven ? 1 : -0.72) + i * 0.72);
-      final ringRect = Rect.fromCenter(
-        center: Offset.zero,
-        width: radius * (2.10 + i * 0.13),
-        height: radius * (0.46 + i * 0.055),
-      );
-      final ringGlow = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 7
-        ..color = ringColors[i].withValues(alpha: 0.20)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-      canvas.drawOval(ringRect, ringGlow);
-      final ringLine = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.8
-        ..color = ringColors[i].withValues(alpha: 0.82);
-      canvas.drawOval(ringRect, ringLine);
-      canvas.restore();
-    }
-
-    final corePaint = Paint()
-      ..shader = const RadialGradient(
-        colors: [
-          Color(0xFF123B70),
-          Color(0xFF0A1C35),
-          Color(0x000A1C35),
-        ],
-      ).createShader(Rect.fromCircle(center: center, radius: radius * 0.58));
-    canvas.drawCircle(center, radius * 0.58, corePaint);
-    final coreOutline = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
-      ..color = const Color(0xFF44DFFF).withValues(alpha: 0.68);
-    canvas.drawCircle(center, radius * 0.49, coreOutline);
-
     final orbitPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
@@ -253,6 +208,51 @@ class _NovaOrbitPainter extends CustomPainter {
         canvas.drawCircle(point, dotRadius, paint);
       }
     }
+
+    // Four luminous neon rings orbit the NOVA core at different angles.
+    const ringColors = <Color>[
+      Color(0xFF28D7FF),
+      Color(0xFF477BFF),
+      Color(0xFFB35CFF),
+      Color(0xFFFF55B8),
+    ];
+    for (var i = 0; i < ringColors.length; i++) {
+      canvas.save();
+      canvas.translate(center.dx, center.dy);
+      canvas.rotate(rotation * (i.isEven ? 1 : -0.72) + i * 0.72);
+      final ringRect = Rect.fromCenter(
+        center: Offset.zero,
+        width: radius * (2.10 + i * 0.13),
+        height: radius * (0.46 + i * 0.055),
+      );
+      final ringGlow = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 7
+        ..color = ringColors[i].withValues(alpha: 0.20)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      canvas.drawOval(ringRect, ringGlow);
+      final ringLine = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.8
+        ..color = ringColors[i].withValues(alpha: 0.82);
+      canvas.drawOval(ringRect, ringLine);
+      canvas.restore();
+    }
+
+    final corePaint = Paint()
+      ..shader = const RadialGradient(
+        colors: [
+          Color(0xFF123B70),
+          Color(0xFF0A1C35),
+          Color(0x000A1C35),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: radius * 0.58));
+    canvas.drawCircle(center, radius * 0.58, corePaint);
+    final coreOutline = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..color = const Color(0xFF44DFFF).withValues(alpha: 0.68);
+    canvas.drawCircle(center, radius * 0.49, coreOutline);
 
     final orbitPaint = Paint()
       ..style = PaintingStyle.stroke
