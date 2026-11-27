@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/vpn_server.dart';
 import '../services/api_service.dart';
+import '../services/app_localizations.dart';
 import '../services/storage_service.dart';
 
 /// Location picker. Server profiles remain private and are never exposed here.
@@ -384,7 +385,7 @@ class _ServerListScreenState extends State<ServerListScreen> {
 
   @override
   Widget build(BuildContext context) => Directionality(
-        textDirection: _fa ? TextDirection.rtl : TextDirection.ltr,
+        textDirection: _rtl ? TextDirection.rtl : TextDirection.ltr,
         child: Scaffold(
           backgroundColor: const Color(0xFF071020),
           body: SafeArea(
@@ -453,9 +454,9 @@ class _ServerListScreenState extends State<ServerListScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                       child: Row(
                         children: [
-                          _tabChip(_fa ? 'مکان‌ها' : 'Locations', 0),
-                          _tabChip(_fa ? 'مورد علاقه' : 'Favorites', 1),
-                          _tabChip(_fa ? 'اخیر' : 'Recent', 2),
+                          _tabChip(_t('locations'), 0),
+                          _tabChip(_t('favorites'), 1),
+                          _tabChip(_t('recent'), 2),
                         ],
                       ),
                     ),
