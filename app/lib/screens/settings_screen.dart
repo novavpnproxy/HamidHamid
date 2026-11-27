@@ -111,7 +111,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) => AlertDialog(
             backgroundColor: _lightTheme ? const Color(0xFFF9FCFF) : const Color(0xFF191F2C),
-            title: Text(_fa ? 'تونل برنامه‌های گوشی' : 'Per-app VPN',
+            title: Text(_t('split'),
                 style: TextStyle(color: _lightTheme ? const Color(0xFF20334D) : Colors.white)),
             content: SizedBox(
               width: double.maxFinite,
@@ -159,7 +159,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dialogContext).pop(),
-                child: Text(_fa ? 'انصراف' : 'Cancel'),
+                child: Text(_t('cancel')),
               ),
               FilledButton(
                 onPressed: () async {
@@ -167,7 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   if (mounted) setState(() => _selectedTunnelApps = selected);
                   if (dialogContext.mounted) Navigator.of(dialogContext).pop();
                 },
-                child: Text(_fa ? 'ذخیره' : 'Save'),
+                child: Text(_t('save')),
               ),
             ],
           ),
@@ -199,14 +199,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Row(
                   children: [
                     IconButton(
-                      tooltip: _fa ? 'بستن' : 'Close',
+                      tooltip: _t('close'),
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(Icons.close_rounded,
                           color: Color(0xFFB8B6C1)),
                     ),
                     const Spacer(),
                     Text(
-                      _fa ? 'تنظیمات' : 'Settings',
+                      _t('settings'),
                       style: const TextStyle(
                         color: Color(0xFFF0EFF4),
                         fontSize: 18,
@@ -218,22 +218,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         color: _lightTheme ? const Color(0xFF49688F) : const Color(0xFFE0DFE6), size: 20),
                   ],
                 ),
-                _sectionTitle(_fa ? 'حساب کاربری' : 'Account'),
+                _sectionTitle(_t('account')),
                 _settingsCard([
                   _comingSoonRow(
                     icon: Icons.person_add_alt_1_rounded,
-                    title: _fa ? 'عضو شدن' : 'Join',
+                    title: _t('join'),
                     subtitle: _fa
                         ? 'ساخت و مدیریت حساب کاربری به‌زودی'
                         : 'Account creation and management coming soon',
                   ),
                 ]),
 
-                _sectionTitle(_fa ? 'شبکه' : 'Network'),
+                _sectionTitle(_t('network')),
                 _settingsCard([
                   ListTile(
                     leading: const Icon(Icons.call_split_rounded, color: Color(0xFF4D91FF), size: 20),
-                    title: Text(_fa ? 'تونل برنامه‌های گوشی' : 'Per-app VPN',
+                    title: Text(_t('split'),
                         style: TextStyle(color: _lightTheme ? const Color(0xFF263B59) : const Color(0xFFE0DFE7), fontSize: 13, fontWeight: FontWeight.w700)),
                     subtitle: Text(
                       _loadingApps
@@ -248,7 +248,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     dense: true,
                   ),
                 ]),
-                _sectionTitle(_fa ? 'نمایش' : 'Appearance'),
+                _sectionTitle(_t('appearance')),
                 _settingsCard([
                   SwitchListTile(
                     secondary: Icon(
@@ -257,7 +257,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       size: 20,
                     ),
                     title: Text(
-                      _fa ? 'حالت روشن' : 'Light theme',
+                      _t('light'),
                       style: TextStyle(
                         color: _lightTheme ? const Color(0xFF263B59) : const Color(0xFFE0DFE7),
                         fontSize: 13,
@@ -277,13 +277,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     dense: true,
                   ),
                 ]),
-                _sectionTitle(_fa ? 'برنامه' : 'Application'),
+                _sectionTitle(_t('application')),
                 _settingsCard([
                   ListTile(
                     leading: const Icon(Icons.language_rounded,
                         color: Color(0xFF7EA6FF), size: 20),
                     title: Text(
-                      _fa ? 'زبان' : 'Language',
+                      _t('language'),
                       style: TextStyle(
                           color: _lightTheme ? const Color(0xFF263B59) : const Color(0xFFE0DFE7),
                           fontSize: 13,
@@ -346,7 +346,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       size: 20,
                     ),
                     title: Text(
-                      _fa ? 'تماس با ما' : 'Contact us',
+                      _t('contact'),
                       style: TextStyle(
                         color: _lightTheme
                             ? const Color(0xFF263B59)
@@ -368,7 +368,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Divider(height: 1, color: Color(0xFF2B2933)),
                   _comingSoonRow(
                     icon: Icons.help_outline_rounded,
-                    title: _fa ? 'سؤالات متداول' : 'Frequently asked questions',
+                    title: _t('faq'),
                     subtitle: _fa
                         ? 'راهنمای برنامه در حال آماده‌سازی است'
                         : 'The app guide is being prepared',
@@ -376,7 +376,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Divider(height: 1, color: Color(0xFF2B2933)),
                   _comingSoonRow(
                     icon: Icons.privacy_tip_outlined,
-                    title: _fa ? 'سیاست حفظ حریم خصوصی' : 'Privacy policy',
+                    title: _t('privacy'),
                     subtitle: _fa
                         ? 'پیش از انتشار عمومی باید تکمیل شود'
                         : 'Must be completed before public release',
@@ -384,7 +384,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Divider(height: 1, color: Color(0xFF2B2933)),
                   _comingSoonRow(
                     icon: Icons.description_outlined,
-                    title: _fa ? 'شرایط استفاده از خدمات' : 'Terms of service',
+                    title: _t('terms'),
                     subtitle: _fa
                         ? 'پیش از انتشار عمومی باید تکمیل شود'
                         : 'Must be completed before public release',
@@ -395,7 +395,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     leading: const Icon(Icons.info_outline_rounded,
                         color: Color(0xFF777580), size: 20),
                     title: Text(
-                      _fa ? 'نسخه برنامه' : 'App version',
+                      _t('version'),
                       style: const TextStyle(
                           color: Color(0xFFB4B2BD), fontSize: 13),
                     ),
