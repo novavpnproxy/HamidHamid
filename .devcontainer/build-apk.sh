@@ -27,7 +27,7 @@ echo "Generating launcher icons..."
 dart run flutter_launcher_icons
 
 echo "Building debug APK..."
-flutter build apk --debug --dart-define=API_BASE_URL=https://nova-vpn-clinet-db.onrender.com
+flutter build apk --debug --dart-define=API_BASE_URL=https://nova-vpn-db.onrender.com
 
 APK="$APP_DIR/build/app/outputs/flutter-apk/app-debug.apk"
 test -s "$APK"

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .Profile_delivery import install_profile_delivery
+from .vox_client import install_vox_routes
 
 import hmac
 import json
@@ -385,7 +386,7 @@ def delete_server(server_id: str, _: dict = Depends(admin_claims)) -> Response:
 @app.get("/admin", include_in_schema=False)
 def admin_page() -> FileResponse:
     return FileResponse(APP_DIR / "admin.html", headers={"Cache-Control": "no-store"})
-install_profile_delivery(
+client_auth = install_profile_delivery(
     app,
     database=database,
     admin_claims=admin_claims,
@@ -393,3 +394,4 @@ install_profile_delivery(
     issuer=TOKEN_ISSUER,
     algorithm=ALGORITHM,
 )
+install_vox_routes(app, require_client=client_auth)

@@ -12,7 +12,7 @@ dart run flutter_launcher_icons
 dart format lib test
 flutter analyze --no-fatal-infos
 flutter test
-flutter build apk --debug --dart-define=API_BASE_URL=https://nova-vpn-clinet-db.onrender.com
+flutter build apk --debug --dart-define=API_BASE_URL=https://nova-vpn-db.onrender.com
 ```
 
 The APK output is:

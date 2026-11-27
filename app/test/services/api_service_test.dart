@@ -41,8 +41,11 @@ void main() {
   group('ApiService', () {
     test('parses public server metadata', () async {
       final client = MockClient((request) async {
-        expect(request.url.path, '/api/v1/servers');
         expect(request.headers['cache-control'], 'no-store');
+        if (request.url.path == '/api/v1/vox/locations') {
+          return http.Response('{\"detail\":\"not configured\"}', 503);
+        }
+        expect(request.url.path, '/api/v1/servers');
 
         return http.Response(
           jsonEncode({
@@ -72,6 +75,63 @@ void main() {
       expect(servers, hasLength(1));
       expect(servers.single.id, 'server-1');
       expect(servers.single.name, 'Managed node');
+      api.close();
+    });
+
+
+    test('merges Vox locations into the server picker', () async {
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/v1/servers') {
+          return http.Response('{"servers":[]}', 200);
+        }
+        expect(request.url.path, '/api/v1/vox/locations');
+        expect(request.url.queryParameters['protocol'], 'vless');
+        return http.Response(
+          jsonEncode({
+            'locations': [
+              {
+                'id': 'de-frankfurt',
+                'label': 'Germany (Frankfurt)',
+                'country': 'DE',
+                'country_name': 'Germany',
+                'city': 'Frankfurt',
+                'protocols': ['vless'],
+              },
+            ],
+          }),
+          200,
+        );
+      });
+      final api = ApiService(client: client, baseUrl: 'https://vpn.example');
+      final servers = await api.fetchServers();
+      expect(servers, hasLength(1));
+      expect(servers.single.id, 'vox:de-frankfurt');
+      expect(servers.single.protocol, 'VLESS');
+      expect(servers.single.countryCode, 'DE');
+      expect(servers.single.locationNameEn, 'Frankfurt');
+      api.close();
+    });
+
+    test('fetches a fresh Vox VLESS config using the protected backend route', () async {
+      final storage = _MemorySecureStorage()..token = 'client-token';
+      final client = MockClient((request) async {
+        expect(request.url.path, '/api/v1/vox/config');
+        expect(request.url.queryParameters['location'], 'de-frankfurt');
+        expect(request.url.queryParameters['protocol'], 'vless');
+        expect(request.headers['authorization'], 'Bearer client-token');
+        expect(request.headers['cache-control'], 'no-store');
+        return http.Response(
+          jsonEncode({'config': 'vless://fresh-vox-profile'}),
+          200,
+        );
+      });
+      final api = ApiService(
+        client: client,
+        storage: storage,
+        baseUrl: 'https://vpn.example',
+      );
+      expect(await api.fetchServerConfig('vox:de-frankfurt'),
+          'vless://fresh-vox-profile');
       api.close();
     });
 
@@ -186,7 +246,9 @@ void main() {
     test('allows emulator loopback HTTP for local development', () async {
       final api = ApiService(
         client: MockClient(
-          (_) async => http.Response('{"servers":[]}', 200),
+          (request) async => request.url.path == '/api/v1/servers'
+            ? http.Response('{"servers":[]}', 200)
+            : http.Response('{"detail":"not configured"}', 503),
         ),
         baseUrl: 'http://10.0.2.2:8000',
       );

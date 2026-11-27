@@ -39,12 +39,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   int _uploadedBytes = 0;
   int _downloadedBytes = 0;
   int? _pingMs;
-  bool _pingAttempted = false;
   String? _message;
   bool _busy = false;
   bool _showConnectingPage = false;
   DateTime? _connectingStartedAt;
   bool _failoverRunning = false;
+  bool _restoredVerificationRunning = false;
   bool _cancelRequested = false;
   bool _selectedFavorite = false;
   int _currentAttempt = 0;
@@ -72,6 +72,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   void _onEngineStatus(V2RayStatus status) {
     if (!mounted) return;
+    final nativeConnected = status.state.toUpperCase() == 'CONNECTED';
     setState(() {
       _uploadSpeed = status.uploadSpeed;
       _downloadSpeed = status.downloadSpeed;
@@ -79,13 +80,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       _downloadedBytes = status.download;
       switch (status.state.toUpperCase()) {
         case 'CONNECTED':
-          final wasConnected = _connection == _ConnectionUi.connected;
-          _connection = _ConnectionUi.connected;
-          if (!wasConnected) _startAutoDisconnectTimer();
-          _message = null;
+          // Native CONNECTED is not enough: the service-level HTTPS probe
+          // must finish before the UI reports a working VPN session.
+          if (_connection != _ConnectionUi.connected &&
+              _connection != _ConnectionUi.disconnecting) {
+            _connection = _ConnectionUi.connecting;
+            _message = _fa
+                ? 'در حال بررسی عبور ترافیک…'
+                : 'Verifying VPN traffic…';
+          }
           break;
         case 'CONNECTING':
-          _connection = _ConnectionUi.connecting;
+          if (_connection != _ConnectionUi.connected &&
+              _connection != _ConnectionUi.disconnecting) {
+            _connection = _ConnectionUi.connecting;
+          }
           break;
         case 'DISCONNECTING':
           _connection = _ConnectionUi.disconnecting;
@@ -101,7 +110,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             _uploadedBytes = 0;
             _downloadedBytes = 0;
             _pingMs = null;
-            _pingAttempted = false;
             _activeServer = null;
           }
           break;
@@ -115,9 +123,44 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           break;
       }
     });
-    if (status.state.toUpperCase() == 'CONNECTED' && !_pingAttempted) {
-      _pingAttempted = true;
+
+    // Restored sessions must pass the same data-plane gate. A fresh
+    // connection is already being verified inside VpnService.connect().
+    if (nativeConnected &&
+        !_busy &&
+        !_connected &&
+        !_restoredVerificationRunning) {
+      _restoredVerificationRunning = true;
+      unawaited(_verifyRestoredConnection());
+    }
+  }
+
+  Future<void> _verifyRestoredConnection() async {
+    try {
+      await _vpn.verifyActiveDataPlane();
+      if (!mounted || _busy) return;
+      setState(() {
+        _connection = _ConnectionUi.connected;
+        _message = null;
+      });
+      _startAutoDisconnectTimer();
       unawaited(_refreshConnectedPing());
+    } catch (_) {
+      try {
+        await _vpn.disconnect();
+      } catch (_) {
+        // Keep the UI in an error state even if shutdown also fails.
+      }
+      if (mounted) {
+        setState(() {
+          _connection = _ConnectionUi.error;
+          _message = _fa
+              ? 'ترافیک تونل تأیید نشد؛ اتصال قطع شد.'
+              : 'VPN traffic could not be verified; connection was stopped.';
+        });
+      }
+    } finally {
+      _restoredVerificationRunning = false;
     }
   }
 
@@ -365,6 +408,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           _connection = _ConnectionUi.connected;
           _message = null;
         });
+        _startAutoDisconnectTimer();
+        unawaited(_refreshConnectedPing());
       }
     } on _ConnectionCancelledException {
       if (mounted) {

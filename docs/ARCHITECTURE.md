@@ -24,3 +24,8 @@
 - Deploy the FastAPI control plane behind HTTPS with persistent database storage, backups, migrations, rotated secrets, and protected admin access.
 - Verify device approval and protected profile delivery under production hosting.
 - Complete security and privacy review, publish a privacy policy, and only then consider advertising SDKs.
+
+
+### Native engine security gate — 2026-11-25
+
+The pinned Xray plugin fork now includes a fail-closed socket-protection helper. Missing listener, invalid FD, callback exception, and Android protect rejection all return failure. JUnit tests were added but have not yet been run in CI. A native CONNECTED event still only confirms core startup; it is not a verified data-plane connection. The app must not claim internet connectivity until physical-device TCP/DNS/UDP and IP-leak tests pass. Candidate routing/IPv6 behavior and native AAR provenance remain open gates.

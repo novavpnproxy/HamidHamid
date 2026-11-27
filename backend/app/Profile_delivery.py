@@ -308,3 +308,4 @@ def install_profile_delivery(
         }
 
     app.include_router(router)
+    return require_client
