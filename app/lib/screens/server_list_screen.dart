@@ -35,6 +35,16 @@ class _ServerListScreenState extends State<ServerListScreen> {
     _loadSavedLists();
   }
 
+  Future<void> _refreshServers() async {
+    final next = _api.fetchServers();
+    if (mounted) setState(() => _servers = next);
+    try {
+      await next;
+    } catch (_) {
+      // FutureBuilder shows the existing retry state if refresh fails.
+    }
+  }
+
   Future<void> _loadSavedLists() async {
     final values = await Future.wait([
       _storage.readFavoriteServerIds(),
@@ -484,29 +494,35 @@ class _ServerListScreenState extends State<ServerListScreen> {
                         ),
                       ),
                     Expanded(
-                      child: _tab == 1
-                          ? _savedList(servers, favorites: true)
-                          : _tab == 2
-                              ? _savedList(servers, favorites: false)
-                              : ListView(
-                                  padding: EdgeInsets.zero,
-                                  children: [
-                                    _automaticRow(),
-                                    if (countries.isEmpty)
-                                      Padding(
-                                        padding: const EdgeInsets.all(28),
-                                        child: Text(
-                                          _fa
-                                              ? 'هنوز موقعیت فعالی ثبت نشده است.'
-                                              : 'No active locations are available yet.',
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(color: Color(0xFF9998A2)),
+                      child: RefreshIndicator(
+                        onRefresh: _refreshServers,
+                        color: const Color(0xFF42C9E8),
+                        backgroundColor: const Color(0xFF20202A),
+                        child: _tab == 1
+                            ? _savedList(servers, favorites: true)
+                            : _tab == 2
+                                ? _savedList(servers, favorites: false)
+                                : ListView(
+                                    physics: const AlwaysScrollableScrollPhysics(),
+                                    padding: EdgeInsets.zero,
+                                    children: [
+                                      _automaticRow(),
+                                      if (countries.isEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.all(28),
+                                          child: Text(
+                                            _fa
+                                                ? 'هنوز موقعیت فعالی ثبت نشده است.'
+                                                : 'No active locations are available yet.',
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(color: Color(0xFF9998A2)),
+                                          ),
                                         ),
-                                      ),
-                                    for (final code in countries)
-                                      _countryRow(code, groups[code]!),
-                                  ],
-                                ),
+                                      for (final code in countries)
+                                        _countryRow(code, groups[code]!),
+                                    ],
+                                  ),
+                      ),
                     ),
                   ],
                 );
