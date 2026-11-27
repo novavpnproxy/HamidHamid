@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/storage_service.dart';
+import '../services/vpn_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -13,6 +14,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _storage = StorageService();
   String _language = 'fa';
   bool _lightTheme = false;
+  Set<String> _selectedTunnelApps = <String>{};
+  List<Map<String, String>> _installedApps = <Map<String, String>>[];
+  bool _loadingApps = false;
 
   bool get _fa => _language == 'fa';
 
@@ -24,6 +28,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
     _storage.readLightTheme().then((value) {
       if (mounted) setState(() => _lightTheme = value);
+    });
+    _storage.readTunnelApps().then((value) {
+      if (mounted) setState(() => _selectedTunnelApps = value.toSet());
     });
   }
 
@@ -71,6 +78,100 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         dense: true,
       );
+
+  Future<void> _openSplitTunneling() async {
+    if (_loadingApps) return;
+    setState(() => _loadingApps = true);
+    try {
+      final values = await Future.wait([
+        VpnService().getInstalledApps(),
+        _storage.readTunnelApps(),
+      ]);
+      if (!mounted) return;
+      _installedApps = values[0] as List<Map<String, String>>;
+      _selectedTunnelApps = (values[1] as List<String>).toSet();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_fa ? 'فهرست برنامه‌های گوشی دریافت نشد.' : 'Could not load phone apps.')),
+        );
+      }
+      return;
+    } finally {
+      if (mounted) setState(() => _loadingApps = false);
+    }
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        var selected = Set<String>.from(_selectedTunnelApps);
+        return StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            backgroundColor: _lightTheme ? const Color(0xFFF9FCFF) : const Color(0xFF191F2C),
+            title: Text(_fa ? 'تونل برنامه‌های گوشی' : 'Per-app VPN',
+                style: TextStyle(color: _lightTheme ? const Color(0xFF20334D) : Colors.white)),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 430,
+              child: Column(
+                children: [
+                  Text(
+                    _fa
+                        ? 'فقط برنامه‌های علامت‌خورده از VPN عبور می‌کنند. اگر هیچ برنامه‌ای انتخاب نشود، VPN برای همه برنامه‌ها فعال است.'
+                        : 'Only checked apps use the VPN. If none are selected, the VPN is used by all apps.',
+                    style: TextStyle(color: _lightTheme ? const Color(0xFF49688F) : const Color(0xFFB8C7DD), fontSize: 11, height: 1.5),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: _installedApps.isEmpty
+                        ? Center(child: Text(_fa ? 'برنامه قابل انتخابی پیدا نشد.' : 'No launchable apps found.'))
+                        : ListView.builder(
+                            itemCount: _installedApps.length,
+                            itemBuilder: (context, index) {
+                              final app = _installedApps[index];
+                              final packageName = app['packageName'] ?? '';
+                              return CheckboxListTile(
+                                dense: true,
+                                value: selected.contains(packageName),
+                                onChanged: (checked) => setDialogState(() {
+                                  if (checked == true) {
+                                    selected.add(packageName);
+                                  } else {
+                                    selected.remove(packageName);
+                                  }
+                                }),
+                                title: Text(app['appName'] ?? packageName,
+                                    style: TextStyle(color: _lightTheme ? const Color(0xFF20334D) : const Color(0xFFE8F0FC), fontSize: 13)),
+                                subtitle: Text(packageName,
+                                    style: TextStyle(color: _lightTheme ? const Color(0xFF71839B) : const Color(0xFF818FA4), fontSize: 9)),
+                                secondary: const Icon(Icons.apps_rounded, color: Color(0xFF4D91FF)),
+                                controlAffinity: ListTileControlAffinity.leading,
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(_fa ? 'انصراف' : 'Cancel'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  await _storage.writeTunnelApps(selected.toList());
+                  if (mounted) setState(() => _selectedTunnelApps = selected);
+                  if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                },
+                child: Text(_fa ? 'ذخیره' : 'Save'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Future<void> _changeTheme(bool value) async {
     await _storage.writeLightTheme(value);
@@ -127,12 +228,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 _sectionTitle(_fa ? 'شبکه' : 'Network'),
                 _settingsCard([
-                  _comingSoonRow(
-                    icon: Icons.call_split_rounded,
-                    title: _fa ? 'تونل برنامه‌های گوشی' : 'Per-app VPN',
-                    subtitle: _fa
-                        ? 'انتخاب برنامه‌هایی که از VPN استفاده می‌کنند'
-                        : 'Choose which phone apps use the VPN',
+                  ListTile(
+                    leading: const Icon(Icons.call_split_rounded, color: Color(0xFF4D91FF), size: 20),
+                    title: Text(_fa ? 'تونل برنامه‌های گوشی' : 'Per-app VPN',
+                        style: TextStyle(color: _lightTheme ? const Color(0xFF263B59) : const Color(0xFFE0DFE7), fontSize: 13, fontWeight: FontWeight.w700)),
+                    subtitle: Text(
+                      _loadingApps
+                          ? (_fa ? 'در حال دریافت برنامه‌ها…' : 'Loading apps…')
+                          : _selectedTunnelApps.isEmpty
+                              ? (_fa ? 'همه برنامه‌ها از VPN استفاده می‌کنند' : 'All apps use the VPN')
+                              : (_fa ? '${_selectedTunnelApps.length} برنامه انتخاب شده' : '${_selectedTunnelApps.length} apps selected'),
+                      style: TextStyle(color: _lightTheme ? const Color(0xFF71839B) : const Color(0xFF9A98A5), fontSize: 10),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF8192A8)),
+                    onTap: _openSplitTunneling,
+                    dense: true,
                   ),
                 ]),
                 _sectionTitle(_fa ? 'نمایش' : 'Appearance'),
