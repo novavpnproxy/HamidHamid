@@ -1,0 +1,35 @@
+workflows:
+  nova-vpn-android:
+    name: NOVA VPN Android APK
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: ui/jumpjump-reference
+          include: true
+          source: true
+    scripts:
+      - name: Generate Android platform files if missing
+        script: |
+          cd "$CM_BUILD_DIR/app"
+          if [ ! -d android ]; then
+            flutter create --platforms=android --org=com.novavpn --project-name=app --no-pub .
+          fi
+      - name: Resolve Flutter dependencies
+        script: |
+          cd "$CM_BUILD_DIR/app"
+          flutter pub get
+      - name: Generate NOVA launcher icons
+        script: |
+          cd "$CM_BUILD_DIR/app"
+          dart run flutter_launcher_icons
+      - name: Build Android debug APK
+        script: |
+          cd "$CM_BUILD_DIR/app"
+          flutter build apk --debug --dart-define=API_BASE_URL=https://nova-vpn-clinet-db.onrender.com
+    artifacts:
+      - app/build/app/outputs/flutter-apk/app-debug.apk

@@ -15,16 +15,23 @@ dependencies:
   shared_preferences: ^2.3.2
   flutter_v2ray_client:
     git:
-      url: https://github.com/mynovavpnproxy1/flutter_v2ray_client.git
-      ref: 89fdab138073333eb0eaf03ac2e16dbde874be1c
+      url: https://github.com/khadamatvanezafatejeyran-bot/flutter_v2ray_client.git
+      ref: 138faaddc216ef2b2960a0acd265151f065234e3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
   assets:
-    - assets/brand/nova_logo_dark.jpg
     - assets/brand/nova_logo_new.jpg
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/brand/nova_logo_new.jpg
+  adaptive_icon_background: "#071020"
+  adaptive_icon_foreground: assets/brand/nova_logo_new.jpg

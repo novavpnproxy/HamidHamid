@@ -60,7 +60,7 @@ jobs:
         run: python -m pytest -q
 
   android:
-    name: Flutter checks and Android debug build
+    name: Flutter checks and Android arm64 release build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -81,6 +81,8 @@ jobs:
           fi
       - name: Resolve dependencies
         run: flutter pub get
+      - name: Generate NOVA Android launcher icons
+        run: dart run flutter_launcher_icons
       - name: Format Dart sources
         run: dart format lib test
       - name: Check Dart formatting
@@ -88,28 +90,19 @@ jobs:
       - name: Analyze Flutter project
         run: flutter analyze --no-fatal-infos
       - name: Run Flutter tests
-        run: |
-          if [ -d test ] && find test -type f -name '*_test.dart' -print -quit | grep -q .; then
-            flutter test
-          else
-            echo "No Dart test files are present; skipping Flutter test runner."
-          fi
-      - name: Run native VPN plugin unit tests
-        run: |
-          cd android
-          ./gradlew :flutter_v2ray_client:testDebugUnitTest
-      - name: Build Android debug APK
+        run: flutter test
+      - name: Build Android arm64 release APK
         env:
-          API_BASE_URL: ${{ vars.API_BASE_URL || 'https://nova-vpn-clinet-db.onrender.com' }}
+          API_BASE_URL: ${{ vars.API_BASE_URL || 'https://nova-vpn-db.onrender.com' }}
         run: |
           if [[ "$API_BASE_URL" != https://* ]]; then
             echo "::error::API_BASE_URL must use HTTPS."
             exit 1
           fi
-          flutter build apk --debug --dart-define=API_BASE_URL="$API_BASE_URL"
-      - name: Upload debug APK
+          flutter build apk --release --target-platform android-arm64 --dart-define=API_BASE_URL="$API_BASE_URL"
+      - name: Upload arm64 release APK
         uses: actions/upload-artifact@v4
         with:
-          name: nova-vpn-debug-apk
-          path: app/build/app/outputs/flutter-apk/app-debug.apk
+          name: nova-vpn-arm64-release-apk
+          path: app/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error

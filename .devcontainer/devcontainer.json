@@ -1,0 +1,33 @@
+{
+  "name": "NOVA VPN Android Builder",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/nordcominc/devcontainer-features/android-sdk:1.2.0": {
+      "platform": "36",
+      "build_tools": "36.0.0",
+      "extra_packages": "platform-tools"
+    },
+    "ghcr.io/awf-project/devcontainer-features/flutter:1": {
+      "version": "stable",
+      "precacheAndroid": true
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/build-apk.sh",
+  "customizations": {
+    "codespaces": {
+      "repositories": {
+        "mynovavpnproxy1/flutter_v2ray_client": {
+          "permissions": {
+            "contents": "read"
+          }
+        }
+      }
+    },
+    "vscode": {
+      "extensions": [
+        "Dart-Code.flutter",
+        "Dart-Code.dart-code"
+      ]
+    }
+  }
+}

@@ -9,6 +9,7 @@ import '../services/storage_service.dart';
 import '../services/vpn_service.dart';
 import 'server_list_screen.dart';
 import 'settings_screen.dart';
+import '../widgets/nova_animations.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,7 +32,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   VpnServer? _preferredServer;
   String _language = 'fa';
   bool _lightTheme = false;
-  String _duration = '00:00:00';
+  Timer? _autoDisconnectTimer;
+  int _autoDisconnectRemainingSeconds = 2 * 60 * 60;
   int _uploadSpeed = 0;
   int _downloadSpeed = 0;
   int _uploadedBytes = 0;
@@ -39,6 +41,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   int? _pingMs;
   String? _message;
   bool _busy = false;
+  bool _showConnectingPage = false;
+  DateTime? _connectingStartedAt;
   bool _failoverRunning = false;
   bool _restoredVerificationRunning = false;
   bool _cancelRequested = false;
@@ -85,7 +89,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ? 'در حال بررسی عبور ترافیک…'
                 : 'Verifying VPN traffic…';
           }
-          _duration = status.duration;
           break;
         case 'CONNECTING':
           if (_connection != _ConnectionUi.connected &&
@@ -99,7 +102,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         case 'DISCONNECTED':
           if (!_failoverRunning || _connection == _ConnectionUi.disconnecting) {
             _connection = _ConnectionUi.disconnected;
-            _duration = '00:00:00';
+            _autoDisconnectTimer?.cancel();
+            _autoDisconnectTimer = null;
+            _autoDisconnectRemainingSeconds = 2 * 60 * 60;
             _uploadSpeed = 0;
             _downloadSpeed = 0;
             _uploadedBytes = 0;
@@ -138,6 +143,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         _connection = _ConnectionUi.connected;
         _message = null;
       });
+      _startAutoDisconnectTimer();
       unawaited(_refreshConnectedPing());
     } catch (_) {
       try {
@@ -169,6 +175,33 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
   }
 
+  String _formatAutoDisconnect(int totalSeconds) {
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:'
+        '${seconds.toString().padLeft(2, '0')}';
+  }
+
+  void _startAutoDisconnectTimer() {
+    _autoDisconnectTimer?.cancel();
+    _autoDisconnectRemainingSeconds = 2 * 60 * 60;
+    _autoDisconnectTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || !_connected) {
+        timer.cancel();
+        _autoDisconnectTimer = null;
+        return;
+      }
+      if (_autoDisconnectRemainingSeconds <= 1) {
+        timer.cancel();
+        _autoDisconnectTimer = null;
+        setState(() => _autoDisconnectRemainingSeconds = 0);
+        unawaited(_disconnect());
+        return;
+      }
+      setState(() => _autoDisconnectRemainingSeconds--);
+    });
+  }
+
   String _formatRate(int bytesPerSecond) {
     if (bytesPerSecond < 1024) return '$bytesPerSecond B/s';
     if (bytesPerSecond < 1024 * 1024) {
@@ -191,6 +224,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void dispose() {
     _pulseController.dispose();
+    _autoDisconnectTimer?.cancel();
     _statusSubscription?.cancel();
     _api.close();
     super.dispose();
@@ -235,6 +269,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Future<void> _disconnect() async {
+    _autoDisconnectTimer?.cancel();
+    _autoDisconnectTimer = null;
     setState(() {
       _busy = true;
       _connection = _ConnectionUi.disconnecting;
@@ -246,7 +282,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         setState(() {
           _connection = _ConnectionUi.disconnected;
           _activeServer = null;
-          _duration = '00:00:00';
         });
       }
     } catch (_) {
@@ -263,7 +298,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Future<void> _connectWithFallback() async {
     _cancelRequested = false;
+    _connectingStartedAt = DateTime.now();
     setState(() {
+      _showConnectingPage = true;
       _busy = true;
       _failoverRunning = true;
       _connection = _ConnectionUi.connecting;
@@ -335,7 +372,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       final connectedServer = await connectWithFallback<VpnServer>(
         candidates: candidates,
         isFatal: (error) => _cancelRequested ||
-            error is ApiException || error is VpnPermissionException,
+            (error is ApiException &&
+                (error.statusCode == 401 ||
+                    error.statusCode == 403 ||
+                    error.statusCode == 429)) ||
+            error is VpnPermissionException,
         onAttempt: (server, index) {
           if (!mounted) return;
           setState(() {
@@ -367,6 +408,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           _connection = _ConnectionUi.connected;
           _message = null;
         });
+        _startAutoDisconnectTimer();
         unawaited(_refreshConnectedPing());
       }
     } on _ConnectionCancelledException {
@@ -420,7 +462,19 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     } finally {
       _cancelRequested = false;
       _failoverRunning = false;
-      if (mounted) setState(() => _busy = false);
+      final startedAt = _connectingStartedAt;
+      if (startedAt != null) {
+        final elapsed = DateTime.now().difference(startedAt);
+        final remaining = const Duration(seconds: 3) - elapsed;
+        if (remaining > Duration.zero) await Future.delayed(remaining);
+      }
+      _connectingStartedAt = null;
+      if (mounted) {
+        setState(() {
+          _showConnectingPage = false;
+          _busy = false;
+        });
+      }
     }
   }
 
@@ -491,34 +545,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ],
               ),
               const Spacer(),
-              AnimatedRotation(
-                turns: _busy ? 1 : 0,
-                duration: const Duration(seconds: 3),
-                curve: Curves.easeInOut,
-                child: Container(
-                  width: 206,
-                  height: 206,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF254A88), width: 1.4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF2D70FF).withValues(alpha: .14),
-                        blurRadius: 34,
-                        spreadRadius: 6,
-                      ),
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      _lightTheme ? 'assets/brand/nova_logo_new.jpg' : 'assets/brand/nova_logo_dark.jpg',
-                      width: 206,
-                      height: 206,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ),
+              const NovaOrbitAnimation(size: 258),
               const SizedBox(height: 28),
               const Text('NOVA VPN',
                   style: TextStyle(
@@ -528,7 +555,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     fontStyle: FontStyle.italic,
                   )),
               const SizedBox(height: 22),
-              Text(_fa ? 'در حال اتصال' : 'Connecting',
+              Text(_connection == _ConnectionUi.connected ? (_fa ? 'متصل شد' : 'Connected') : (_fa ? 'در حال اتصال' : 'Connecting'),
                   style: const TextStyle(
                       color: Color(0xFF4C91FF),
                       fontSize: 14,
@@ -541,7 +568,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     selected?.name ??
                         (_fa ? 'Auto Location' : 'Auto Location'),
                     style: const TextStyle(
-                        color: Colors.white,
+                        color: const Color(0xFF54DDF5),
                         fontSize: 19,
                         fontWeight: FontWeight.w700),
                   ),
@@ -615,7 +642,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    if (_connection == _ConnectionUi.connecting) {
+    if (_showConnectingPage) {
       return Directionality(
         textDirection: _fa ? TextDirection.rtl : TextDirection.ltr,
         child: _buildConnectingPage(),
@@ -682,7 +709,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ClipRRect(
                       borderRadius: BorderRadius.circular(15),
                       child: Image.asset(
-                        _lightTheme ? 'assets/brand/nova_logo_new.jpg' : 'assets/brand/nova_logo_dark.jpg',
+                        'assets/brand/nova_logo_new.jpg',
                         width: 52,
                         height: 52,
                         fit: BoxFit.cover,
@@ -704,12 +731,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
                 if (_connected) ...[
                   const SizedBox(height: 7),
-                  Text(
-                    _duration,
-                    style: const TextStyle(
-                        color: Color(0xFF8F8D99),
-                        fontSize: 11,
-                        fontFeatures: [FontFeature.tabularFigures()]),
+                  Column(
+                    children: [
+                      Text(
+                        _fa ? 'زمان باقی‌مانده تا قطع خودکار' : 'Auto-disconnect in',
+                        style: const TextStyle(
+                          color: Color(0xFF8F8D99),
+                          fontSize: 10,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        _formatAutoDisconnect(_autoDisconnectRemainingSeconds),
+                        textDirection: TextDirection.ltr,
+                        style: const TextStyle(
+                          color: Color(0xFFFFC34D),
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
                 const SizedBox(height: 24),
@@ -721,8 +763,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       onTap: _busy ? null : _toggleConnection,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 260),
-                        width: 184,
-                        height: 68,
+                        width: 210,
+                        height: 66,
                         padding: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(48),
@@ -754,8 +796,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               ? Alignment.centerRight
                               : Alignment.centerLeft,
                           child: Container(
-                            width: 58,
-                            height: 58,
+                            width: 56,
+                            height: 56,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: _lightTheme ? const Color(0xFFFFFFFF) : const Color(0xFFECEBF0),

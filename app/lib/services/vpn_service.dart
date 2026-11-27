@@ -262,9 +262,57 @@ class VpnService {
 
   Future<void> verifyActiveDataPlane() => _verifyDataPlane();
 
-  Future<void> disconnect() async {
+  Future<void> disconnect({
+    Duration timeout = const Duration(seconds: 15),
+  }) async {
     await initialize();
-    await _engine.stopV2Ray();
+
+    final wasActive = _latestStatus.state.toUpperCase() != 'DISCONNECTED';
+    final stopped = Completer<void>();
+    final subscription = statusChanges.listen((status) {
+      if (status.state.toUpperCase() == 'DISCONNECTED' &&
+          !stopped.isCompleted) {
+        stopped.complete();
+      }
+    });
+
+    final deadline = DateTime.now().add(timeout);
+    try {
+      while (!stopped.isCompleted) {
+        await _engine.stopV2Ray();
+
+        // A DISCONNECTED value from before this request is not proof that
+        // a previously active native tunnel has actually stopped.
+        if (!wasActive &&
+            _latestStatus.state.toUpperCase() == 'DISCONNECTED' &&
+            !stopped.isCompleted) {
+          stopped.complete();
+          break;
+        }
+
+        final remaining = deadline.difference(DateTime.now());
+        if (remaining <= Duration.zero) {
+          throw const VpnDisconnectTimeoutException();
+        }
+
+        final wait = remaining < const Duration(seconds: 2)
+            ? remaining
+            : const Duration(seconds: 2);
+        await Future.any<void>([
+          stopped.future,
+          Future<void>.delayed(wait),
+        ]);
+      }
+
+      final remaining = deadline.difference(DateTime.now());
+      await stopped.future.timeout(
+        remaining.isNegative ? Duration.zero : remaining,
+      );
+    } on TimeoutException {
+      throw const VpnDisconnectTimeoutException();
+    } finally {
+      await subscription.cancel();
+    }
   }
 }
 
@@ -282,6 +330,10 @@ class VpnConnectionException implements Exception {
 
 class VpnConnectionTimeoutException implements Exception {
   const VpnConnectionTimeoutException();
+}
+
+class VpnDisconnectTimeoutException implements Exception {
+  const VpnDisconnectTimeoutException();
 }
 
 class VpnDataPlaneException implements Exception {
