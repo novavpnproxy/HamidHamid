@@ -987,8 +987,6 @@ class _HomeScreenState extends State<HomeScreen>
                       icon: const Icon(Icons.tune_rounded,
                           color: Color(0xFFB9C9E4), size: 25),
                     ),
-                    const SizedBox(width: 8),
-                    _buildInternetIndicator(),
                     const Spacer(),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
