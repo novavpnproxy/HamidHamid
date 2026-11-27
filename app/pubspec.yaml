@@ -17,7 +17,7 @@ dependencies:
   flutter_v2ray_client:
     git:
       url: https://github.com/novavpnproxy/flutter_v2ray_client.git
-      ref: 138faaddc216ef2b2960a0acd265151f065234e3
+      ref: b952ca9794063dd2ecdfc43b277d6b7b3662bc93
 
 dev_dependencies:
   flutter_test:
