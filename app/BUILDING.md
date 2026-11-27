@@ -25,3 +25,13 @@ The APK output is:
 - The VOX partner API key remains on the backend and must never be included in the Android application.
 - VOX location metadata is public; fetching a private VLESS profile requires an approved device token.
 - A successful Android build does not prove that a VPN tunnel carries traffic. Verify profile retrieval, engine connection, and real traffic separately.
+
+
+## Latest NOVA UI build candidate
+
+- The connection countdown displays minutes and seconds, beginning at 120:00 for the two-hour session limit.
+- The connecting screen uses the NOVA particle globe with rotating cyan, blue, violet, and magenta neon rings.
+- The home connection control is wider and shorter than the previous circular control.
+- The splash screen duration is four seconds and retains the exact JEYRAN GROUP dedication.
+- The Android client keeps the existing HTTPS data-plane verification and Vox-backed server/profile API. Do not remove these while adjusting the UI.
+- Build API base URL: https://nova-vpn-db.onrender.com
