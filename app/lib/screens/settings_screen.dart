@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/app_localizations.dart';
 import '../services/storage_service.dart';
 import '../services/vpn_service.dart';
+import 'help_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -174,6 +176,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       },
     );
+  }
+
+  Future<void> _openHelp({required bool privacyOnly}) async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => NovaHelpScreen(
+        language: _language,
+        lightTheme: _lightTheme,
+        privacyOnly: privacyOnly,
+      ),
+    ));
+  }
+
+  Future<void> _contactSupport() async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: 'mynovavpnproxy@gmail.com',
+      queryParameters: {'subject': 'Nova VPN Support'},
+    );
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_fa
+            ? 'برنامه ایمیل در دسترس نیست. ایمیل: mynovavpnproxy@gmail.com'
+            : 'No email app is available. Email: mynovavpnproxy@gmail.com')),
+      );
+    }
   }
 
   Future<void> _changeTheme(bool value) async {
@@ -363,11 +391,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         fontSize: 12,
                       ),
                     ),
+                    onTap: _contactSupport,
+                    dense: true,
+                  ),
+                  const Divider(height: 1, color: Color(0xFF2B2933)),
+                  ListTile(
+                    leading: const Icon(Icons.help_outline_rounded, color: Color(0xFF4D91FF), size: 20),
+                    title: Text(_t('faq'), style: TextStyle(color: _lightTheme ? const Color(0xFF263B59) : const Color(0xFFE0DFE7), fontSize: 13, fontWeight: FontWeight.w700)),
+                    subtitle: Text(_fa ? 'پاسخ پرسش‌های رایج درباره برنامه' : 'Answers to common questions about the app', style: TextStyle(color: _lightTheme ? const Color(0xFF71839B) : const Color(0xFF9A98A5), fontSize: 10)),
+                    trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF8192A8)),
+                    onTap: () => _openHelp(privacyOnly: false),
+                    dense: true,
+                  ),
+                  const Divider(height: 1, color: Color(0xFF2B2933)),
+                  ListTile(
+                    leading: const Icon(Icons.privacy_tip_outlined, color: Color(0xFF4D91FF), size: 20),
+                    title: Text(_t('privacy'), style: TextStyle(color: _lightTheme ? const Color(0xFF263B59) : const Color(0xFFE0DFE7), fontSize: 13, fontWeight: FontWeight.w700)),
+                    subtitle: Text(_fa ? 'اطلاعات مربوط به داده‌ها و حریم خصوصی' : 'How data and privacy are handled', style: TextStyle(color: _lightTheme ? const Color(0xFF71839B) : const Color(0xFF9A98A5), fontSize: 10)),
+                    trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF8192A8)),
+                    onTap: () => _openHelp(privacyOnly: true),
                     dense: true,
                   ),
                   const Divider(height: 1, color: Color(0xFF2B2933)),
                   _comingSoonRow(
-                    icon: Icons.help_outline_rounded,
+                    icon: Icons.description_outlined,
                     title: _t('faq'),
                     subtitle: _fa
                         ? 'راهنمای برنامه در حال آماده‌سازی است'
