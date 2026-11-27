@@ -666,7 +666,12 @@ class _HomeScreenState extends State<HomeScreen>
           if (_cancelRequested) throw const _ConnectionCancelledException();
           final profile = await _api.fetchServerConfig(server.id);
           if (_cancelRequested) throw const _ConnectionCancelledException();
-          await _vpn.connect(profile: profile, remark: server.name);
+          final tunnelApps = await _storage.readTunnelApps();
+          await _vpn.connect(
+            profile: profile,
+            remark: server.name,
+            allowedApps: tunnelApps.isEmpty ? null : tunnelApps,
+          );
         },
       );
 
