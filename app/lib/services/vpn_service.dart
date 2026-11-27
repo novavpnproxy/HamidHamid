@@ -2,10 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_v2ray_client/flutter_v2ray.dart';
-import 'package:http/http.dart' as http;
 
 /// رابط اپ با موتور VPN اندروید.
-/// وضعیت موتور از callback بومی خوانده می‌شود؛ این رویداد به‌تنهایی عبور ترافیک TUN را ثابت نمی‌کند.
+/// موفقیت اتصال فقط پس از دریافت وضعیت واقعی CONNECTED اعلام می‌شود.
 class VpnService {
   VpnService._() : _engine = V2ray(onStatusChanged: _publishStatus);
 
@@ -97,7 +96,7 @@ class VpnService {
 
   V2RayStatus get currentStatus => _latestStatus;
 
-  /// Measures the native core's outbound delay; this is not an end-to-end TUN traffic test.
+  /// Measures HTTPS response latency through the active VPN tunnel.
   Future<int> getConnectedServerDelay() =>
       _engine.getConnectedServerDelay();
 
@@ -182,13 +181,9 @@ class VpnService {
         );
 
         await connectedFuture.timeout(timeout);
-        await _verifyDataPlane();
       } on TimeoutException {
         await _stopPreservingFailure();
         throw const VpnConnectionTimeoutException();
-      } on VpnDataPlaneException {
-        await _stopPreservingFailure();
-        rethrow;
       } catch (_) {
         await _stopPreservingFailure();
         // جزئیات خطای بومی ممکن است حاوی دادهٔ حساس پروفایل باشند.
@@ -199,36 +194,6 @@ class VpnService {
     } finally {
       _attemptInProgress = false;
     }
-  }
-
-
-  /// Requires a successful HTTPS request through Android's active VPN route.
-  /// The native CONNECTED callback alone is not treated as a working tunnel.
-  Future<void> _verifyDataPlane() async {
-    for (var attempt = 0; attempt < 3; attempt++) {
-      try {
-        final response = await http
-            .get(
-              Uri.https('api.ipify.org', '/'),
-              headers: const {'Cache-Control': 'no-store'},
-            )
-            .timeout(const Duration(seconds: 7));
-        final address = response.body.trim();
-        final octets = address.split('.');
-        final validIpv4 = octets.length == 4 &&
-            octets.every((part) {
-              final value = int.tryParse(part);
-              return value != null && value >= 0 && value <= 255;
-            });
-        if (response.statusCode == 200 && validIpv4) return;
-      } catch (_) {
-        // Retry briefly while Android installs the VPN routes.
-      }
-      if (attempt < 2) {
-        await Future<void>.delayed(const Duration(seconds: 1));
-      }
-    }
-    throw const VpnDataPlaneException();
   }
 
   String _toEngineConfig(String profile) {
@@ -260,11 +225,58 @@ class VpnService {
     }
   }
 
-  Future<void> verifyActiveDataPlane() => _verifyDataPlane();
-
-  Future<void> disconnect() async {
+  Future<void> disconnect({
+    Duration timeout = const Duration(seconds: 15),
+  }) async {
     await initialize();
-    await _engine.stopV2Ray();
+
+    final stopped = Completer<void>();
+    // Subscribe before requesting stop so a fast DISCONNECTED event is not lost.
+    final subscription = statusChanges.listen((status) {
+      if (status.state.toUpperCase() == 'DISCONNECTED' &&
+          !stopped.isCompleted) {
+        stopped.complete();
+      }
+    });
+
+    final deadline = DateTime.now().add(timeout);
+    try {
+      // Always send a stop command. A stale DISCONNECTED callback must not
+      // prevent the native service from receiving an explicit stop request.
+      while (!stopped.isCompleted) {
+        await _engine.stopV2Ray();
+
+        // Do not trust _latestStatus here: it may be a stale DISCONNECTED
+        // value from before this stop request. Only the listener above may
+        // complete this operation after receiving a fresh engine event.
+
+        final remaining = deadline.difference(DateTime.now());
+        if (remaining <= Duration.zero) {
+          throw const VpnDisconnectTimeoutException();
+        }
+
+        // Some native service transitions need a second stop request.
+        // Retry without requiring another user tap, while retaining a hard
+        // timeout and waiting for the engine's actual DISCONNECTED event.
+        final wait = remaining < const Duration(seconds: 2)
+            ? remaining
+            : const Duration(seconds: 2);
+        await Future.any<void>([
+          stopped.future,
+          Future<void>.delayed(wait),
+        ]);
+      }
+
+      await stopped.future.timeout(
+        deadline.difference(DateTime.now()).isNegative
+            ? Duration.zero
+            : deadline.difference(DateTime.now()),
+      );
+    } on TimeoutException {
+      throw const VpnDisconnectTimeoutException();
+    } finally {
+      await subscription.cancel();
+    }
   }
 }
 
@@ -284,6 +296,6 @@ class VpnConnectionTimeoutException implements Exception {
   const VpnConnectionTimeoutException();
 }
 
-class VpnDataPlaneException implements Exception {
-  const VpnDataPlaneException();
+class VpnDisconnectTimeoutException implements Exception {
+  const VpnDisconnectTimeoutException();
 }

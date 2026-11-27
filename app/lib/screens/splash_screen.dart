@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../screens/home_screen.dart';
+import 'loading_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -23,19 +23,19 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 900),
     );
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-    _scale = Tween<double>(begin: .86, end: 1).animate(
+    _scale = Tween<double>(begin: .90, end: 1).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
     _controller.forward();
 
-    // Keep the branded launch screen visible for 3.5 seconds.
+    // Keep the logo page, then show the dedicated four-second loading page.
     _timer = Timer(const Duration(milliseconds: 3500), () {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const LoadingScreen()),
       );
     });
   }
@@ -49,10 +49,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) => Scaffold(
+        backgroundColor: const Color(0xFF091321),
         body: Container(
           width: double.infinity,
           decoration: const BoxDecoration(
-            color: Color(0xFF091321),
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
@@ -64,61 +64,51 @@ class _SplashScreenState extends State<SplashScreen>
             ),
           ),
           child: SafeArea(
-            child: Center(
-              child: FadeTransition(
-                opacity: _fade,
-                child: ScaleTransition(
-                  scale: _scale,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/brand/nova_logo_dark.jpg',
-                        width: 206,
-                        height: 206,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(
-                          Icons.shield_outlined,
-                          size: 164,
-                          color: Color(0xFF3B82F6),
-                        ),
+            child: FadeTransition(
+              opacity: _fade,
+              child: ScaleTransition(
+                scale: _scale,
+                child: Column(
+                  children: [
+                    const Spacer(flex: 3),
+                    Image.asset(
+                      'assets/brand/nova_logo_new.jpg',
+                      width: 220,
+                      height: 220,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.high,
+                    ),
+                    const SizedBox(height: 22),
+                    const Text(
+                      'JEYRAN GROUP',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 3.2,
+                        color: Color(0xFFFF454F),
+                        shadows: [
+                          Shadow(color: Color(0xCCFF2638), blurRadius: 16),
+                          Shadow(color: Color(0x99FF2638), blurRadius: 26),
+                        ],
                       ),
-                      SizedBox(height: 30),
-                      Text(
-                        'NOVA VPN',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 4,
-                          color: Color(0xFFF2F5FA),
-                        ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'اینترنت آزاد را با ما تجربه کنید',
+                      textAlign: TextAlign.center,
+                      textDirection: TextDirection.rtl,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF53C8FF),
+                        shadows: [
+                          Shadow(color: Color(0xAA249FFF), blurRadius: 13),
+                        ],
                       ),
-                      SizedBox(height: 14),
-                      SizedBox(height: 18),
-                      Text(
-                        'اتصال هوشمند، سریع و امن',
-                        textAlign: TextAlign.center,
-                        textDirection: TextDirection.rtl,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFFD4DCE8),
-                        ),
-                      ),
-                      SizedBox(height: 34),
-                      SizedBox(
-                        width: 92,
-                        child: LinearProgressIndicator(
-                          minHeight: 3,
-                          borderRadius: BorderRadius.all(Radius.circular(8)),
-                          backgroundColor: Color(0xFF1D2B49),
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF35A8FF)),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const Spacer(flex: 4),
+                  ],
                 ),
               ),
             ),

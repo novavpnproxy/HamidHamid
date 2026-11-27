@@ -94,6 +94,41 @@ def test_country_and_city_location_metadata_reaches_app_without_raw_config(clien
     assert "config" not in server
 
 
+def test_home_content_supports_manual_ads_and_rotating_announcements(client):
+    headers = admin_headers(client)
+    assert client.get("/api/v1/home-content").json() == {
+        "ad_mode": "manual", "network_provider": None, "network_zone_id": None,
+        "network_code": None, "ads": [], "announcements": [],
+    }
+    created_ad = client.post("/api/v1/admin/home-content/ads", headers=headers, json={
+        "title": "Nova partner", "description": "Offer", "image_url": "https://cdn.example/ad.png",
+        "target_url": "https://example.com/offer", "enabled": True, "sort_order": 1,
+    })
+    assert created_ad.status_code == 201
+    ad_id = created_ad.json()["id"]
+    created_notice = client.post("/api/v1/admin/home-content/announcements", headers=headers, json={
+        "message": "Happy new year", "enabled": True, "sort_order": 1,
+    })
+    assert created_notice.status_code == 201
+    public = client.get("/api/v1/home-content")
+    assert public.status_code == 200
+    assert public.json()["ads"][0]["id"] == ad_id
+    assert public.json()["announcements"][0]["message"] == "Happy new year"
+    assert "network_code" not in public.json() or public.json()["network_code"] is None
+
+    network = client.put("/api/v1/admin/home-content/settings", headers=headers, json={
+        "mode": "network", "network_provider": "adsterra", "network_zone_id": "1234567",
+    })
+    assert network.status_code == 200
+    assert client.get("/api/v1/home-content").json()["ad_mode"] == "network"
+    assert client.get("/api/v1/admin/home-content").status_code == 200
+
+
+def test_home_content_admin_routes_require_authentication(client):
+    assert client.get("/api/v1/admin/home-content").status_code == 401
+    assert client.post("/api/v1/admin/home-content/ads", json={}).status_code == 401
+
+
 def test_raw_profile_delivery_requires_client_authorization(client):
     response = client.get("/api/v1/servers/server-id/config")
     assert response.status_code == 401

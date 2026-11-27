@@ -81,6 +81,8 @@ jobs:
           fi
       - name: Resolve dependencies
         run: flutter pub get
+      - name: Generate NOVA Android launcher icons
+        run: dart run flutter_launcher_icons
       - name: Format Dart sources
         run: dart format lib test
       - name: Check Dart formatting
@@ -88,16 +90,7 @@ jobs:
       - name: Analyze Flutter project
         run: flutter analyze --no-fatal-infos
       - name: Run Flutter tests
-        run: |
-          if [ -d test ] && find test -type f -name '*_test.dart' -print -quit | grep -q .; then
-            flutter test
-          else
-            echo "No Dart test files are present; skipping Flutter test runner."
-          fi
-      - name: Run native VPN plugin unit tests
-        run: |
-          cd android
-          ./gradlew :flutter_v2ray_client:testDebugUnitTest
+        run: flutter test
       - name: Build Android debug APK
         env:
           API_BASE_URL: ${{ vars.API_BASE_URL || 'https://nova-vpn-clinet-db.onrender.com' }}

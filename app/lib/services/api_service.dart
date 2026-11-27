@@ -165,6 +165,18 @@ class ApiService {
     }).toList(growable: false);
   }
 
+  Future<HomeContent> fetchHomeContent() async {
+    final response = await _client
+        .get(_uri('/api/v1/home-content'), headers: const {'Cache-Control': 'no-store'})
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode != 200) {
+      throw ApiException('Home content unavailable (' + response.statusCode.toString() + ').', statusCode: response.statusCode);
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) throw const FormatException('Invalid home content response.');
+    return HomeContent.fromJson(decoded);
+  }
+
   Future<String> fetchServerConfig(String serverId) async {
     if (serverId.startsWith('vox:')) {
       return fetchVoxServerConfig(serverId.substring(4));
@@ -224,6 +236,45 @@ class ApiService {
   }
 
   void close() => _client.close();
+}
+
+class HomeContent {
+  const HomeContent({required this.adMode, required this.networkProvider, required this.networkZoneId, required this.networkCode, required this.ads, required this.announcements});
+  final String adMode;
+  final String? networkProvider;
+  final String? networkZoneId;
+  final String? networkCode;
+  final List<HomeAd> ads;
+  final List<HomeAnnouncement> announcements;
+  factory HomeContent.fromJson(Map<String, dynamic> json) => HomeContent(
+    adMode: json['ad_mode'] as String? ?? 'manual',
+    networkProvider: json['network_provider'] as String?,
+    networkZoneId: json['network_zone_id'] as String?,
+    networkCode: json['network_code'] as String?,
+    ads: (json['ads'] as List? ?? const []).map((e) => HomeAd.fromJson(Map<String, dynamic>.from(e as Map))).toList(growable: false),
+    announcements: (json['announcements'] as List? ?? const []).map((e) => HomeAnnouncement.fromJson(Map<String, dynamic>.from(e as Map))).toList(growable: false),
+  );
+}
+
+class HomeAd {
+  const HomeAd({required this.id, required this.title, required this.description, required this.imageUrl, required this.targetUrl});
+  final String id;
+  final String title;
+  final String? description;
+  final String imageUrl;
+  final String targetUrl;
+  factory HomeAd.fromJson(Map<String, dynamic> json) => HomeAd(
+    id: json['id'] as String, title: json['title'] as String,
+    description: json['description'] as String?, imageUrl: json['image_url'] as String,
+    targetUrl: json['target_url'] as String,
+  );
+}
+
+class HomeAnnouncement {
+  const HomeAnnouncement({required this.id, required this.message});
+  final String id;
+  final String message;
+  factory HomeAnnouncement.fromJson(Map<String, dynamic> json) => HomeAnnouncement(id: json['id'] as String, message: json['message'] as String);
 }
 
 class ApiException implements Exception {

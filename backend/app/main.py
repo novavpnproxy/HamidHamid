@@ -131,6 +131,37 @@ def initialize_database() -> None:
         for column in ("location_name_fa", "location_name_en"):
             if column not in existing:
                 conn.execute(f"ALTER TABLE servers ADD COLUMN {column} TEXT")
+        conn.execute("""CREATE TABLE IF NOT EXISTS home_ad_settings (
+            id INTEGER PRIMARY KEY,
+            mode TEXT NOT NULL DEFAULT 'manual',
+            network_provider TEXT,
+            network_zone_id TEXT,
+            network_code TEXT,
+            updated_at TEXT NOT NULL
+        )""")
+        conn.execute("""CREATE TABLE IF NOT EXISTS home_ads (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT,
+            image_url TEXT NOT NULL,
+            target_url TEXT NOT NULL,
+            enabled INTEGER NOT NULL DEFAULT 0,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            starts_at TEXT,
+            ends_at TEXT,
+            updated_at TEXT NOT NULL
+        )""")
+        conn.execute("""CREATE TABLE IF NOT EXISTS announcements (
+            id TEXT PRIMARY KEY,
+            message TEXT NOT NULL,
+            enabled INTEGER NOT NULL DEFAULT 0,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            starts_at TEXT,
+            ends_at TEXT,
+            updated_at TEXT NOT NULL
+        )""")
+        conn.execute("""INSERT INTO home_ad_settings (id, mode, updated_at)
+            VALUES (1, 'manual', ?) ON CONFLICT(id) DO NOTHING""", (utc_now(),))
 
 
 @app.on_event("startup")
@@ -146,7 +177,7 @@ async def add_security_headers(request: Request, call_next):
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "no-referrer")
     response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
-    if request.url.path == "/admin" or request.url.path.startswith("/api/v1/admin/") or request.url.path.endswith("/config"):
+    if request.url.path in {"/admin", "/api/v1/home-content"} or request.url.path.startswith("/api/v1/admin/") or request.url.path.endswith("/config"):
         response.headers["Cache-Control"] = "no-store"
     return response
 
@@ -224,6 +255,65 @@ class ServerInput(BaseModel):
                 raise ValueError("Profile URI scheme does not match the selected protocol")
         if self.location_verified and (not self.country_code or not (self.country_name_fa or self.country_name_en)):
             raise ValueError("Verified location requires a country code and at least one country name")
+        return self
+
+
+class HomeAdInput(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+    description: str | None = Field(default=None, max_length=500)
+    image_url: str = Field(min_length=8, max_length=2048)
+    target_url: str = Field(min_length=8, max_length=2048)
+    enabled: bool = False
+    sort_order: int = Field(default=0, ge=0, le=100000)
+    starts_at: str | None = Field(default=None, max_length=40)
+    ends_at: str | None = Field(default=None, max_length=40)
+
+    @field_validator("image_url", "target_url")
+    @classmethod
+    def require_https_url(cls, value: str) -> str:
+        from urllib.parse import urlparse
+        parsed = urlparse(value.strip())
+        if parsed.scheme != "https" or not parsed.netloc:
+            raise ValueError("Ad image and destination URLs must use HTTPS")
+        return value.strip()
+
+    @field_validator("title")
+    @classmethod
+    def title_not_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Title cannot be blank")
+        return value
+
+
+class AnnouncementInput(BaseModel):
+    message: str = Field(min_length=1, max_length=500)
+    enabled: bool = False
+    sort_order: int = Field(default=0, ge=0, le=100000)
+    starts_at: str | None = Field(default=None, max_length=40)
+    ends_at: str | None = Field(default=None, max_length=40)
+
+    @field_validator("message")
+    @classmethod
+    def message_not_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Message cannot be blank")
+        return value
+
+
+class HomeAdSettingsInput(BaseModel):
+    mode: str = Field(pattern="^(manual|network)$")
+    network_provider: str | None = Field(default=None, max_length=40)
+    network_zone_id: str | None = Field(default=None, max_length=200)
+    network_code: str | None = Field(default=None, max_length=12000)
+
+    @model_validator(mode="after")
+    def validate_network_settings(self):
+        if self.mode == "network" and not (self.network_zone_id or self.network_code):
+            raise ValueError("Network mode requires an ad zone ID or supported ad code")
+        if self.network_provider and self.network_provider.lower() not in {"adsterra"}:
+            raise ValueError("Unsupported ad network provider")
         return self
 
 
@@ -380,6 +470,122 @@ def delete_server(server_id: str, _: dict = Depends(admin_claims)) -> Response:
         cursor = conn.execute("DELETE FROM servers WHERE id = ?", (server_id,))
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="Server not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.get("/api/v1/home-content")
+def public_home_content() -> dict:
+    now = utc_now()
+    with database() as conn:
+        settings = conn.execute("SELECT * FROM home_ad_settings WHERE id = 1").fetchone()
+        ads = conn.execute("""SELECT * FROM home_ads WHERE enabled = 1
+            AND (starts_at IS NULL OR starts_at <= ?)
+            AND (ends_at IS NULL OR ends_at >= ?)
+            ORDER BY sort_order ASC, updated_at DESC""", (now, now)).fetchall()
+        notices = conn.execute("""SELECT * FROM announcements WHERE enabled = 1
+            AND (starts_at IS NULL OR starts_at <= ?)
+            AND (ends_at IS NULL OR ends_at >= ?)
+            ORDER BY sort_order ASC, updated_at DESC""", (now, now)).fetchall()
+    return {
+        "ad_mode": settings["mode"] if settings else "manual",
+        "network_provider": settings["network_provider"] if settings else None,
+        "network_zone_id": settings["network_zone_id"] if settings else None,
+        "network_code": settings["network_code"] if settings else None,
+        "ads": [{k: row[k] for k in ("id", "title", "description", "image_url", "target_url")} for row in ads],
+        "announcements": [{"id": row["id"], "message": row["message"]} for row in notices],
+    }
+
+
+@app.get("/api/v1/admin/home-content")
+def admin_home_content(_: dict = Depends(admin_claims)) -> dict:
+    with database() as conn:
+        settings = conn.execute("SELECT * FROM home_ad_settings WHERE id = 1").fetchone()
+        ads = conn.execute("SELECT * FROM home_ads ORDER BY sort_order, updated_at DESC").fetchall()
+        notices = conn.execute("SELECT * FROM announcements ORDER BY sort_order, updated_at DESC").fetchall()
+    return {
+        "settings": dict(settings) if settings else {"mode": "manual", "network_provider": None, "network_zone_id": None, "network_code": None},
+        "ads": [dict(row) for row in ads],
+        "announcements": [dict(row) for row in notices],
+    }
+
+
+@app.put("/api/v1/admin/home-content/settings")
+def update_home_ad_settings(payload: HomeAdSettingsInput, _: dict = Depends(admin_claims)) -> dict:
+    with database() as conn:
+        conn.execute("""UPDATE home_ad_settings SET mode = ?, network_provider = ?,
+            network_zone_id = ?, network_code = ?, updated_at = ? WHERE id = 1""",
+            (payload.mode, payload.network_provider, payload.network_zone_id, payload.network_code, utc_now()))
+        row = conn.execute("SELECT * FROM home_ad_settings WHERE id = 1").fetchone()
+    return dict(row)
+
+
+@app.post("/api/v1/admin/home-content/ads", status_code=status.HTTP_201_CREATED)
+def create_home_ad(payload: HomeAdInput, _: dict = Depends(admin_claims)) -> dict:
+    ad_id = secrets.token_urlsafe(12)
+    with database() as conn:
+        conn.execute("""INSERT INTO home_ads
+            (id, title, description, image_url, target_url, enabled, sort_order, starts_at, ends_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (ad_id, payload.title, payload.description, payload.image_url, payload.target_url,
+             int(payload.enabled), payload.sort_order, payload.starts_at, payload.ends_at, utc_now()))
+        row = conn.execute("SELECT * FROM home_ads WHERE id = ?", (ad_id,)).fetchone()
+    return dict(row)
+
+
+@app.put("/api/v1/admin/home-content/ads/{ad_id}")
+def update_home_ad(ad_id: str, payload: HomeAdInput, _: dict = Depends(admin_claims)) -> dict:
+    with database() as conn:
+        cursor = conn.execute("""UPDATE home_ads SET title = ?, description = ?, image_url = ?,
+            target_url = ?, enabled = ?, sort_order = ?, starts_at = ?, ends_at = ?, updated_at = ? WHERE id = ?""",
+            (payload.title, payload.description, payload.image_url, payload.target_url,
+             int(payload.enabled), payload.sort_order, payload.starts_at, payload.ends_at, utc_now(), ad_id))
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Ad not found")
+        row = conn.execute("SELECT * FROM home_ads WHERE id = ?", (ad_id,)).fetchone()
+    return dict(row)
+
+
+@app.delete("/api/v1/admin/home-content/ads/{ad_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_home_ad(ad_id: str, _: dict = Depends(admin_claims)) -> Response:
+    with database() as conn:
+        cursor = conn.execute("DELETE FROM home_ads WHERE id = ?", (ad_id,))
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Ad not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.post("/api/v1/admin/home-content/announcements", status_code=status.HTTP_201_CREATED)
+def create_announcement(payload: AnnouncementInput, _: dict = Depends(admin_claims)) -> dict:
+    item_id = secrets.token_urlsafe(12)
+    with database() as conn:
+        conn.execute("""INSERT INTO announcements
+            (id, message, enabled, sort_order, starts_at, ends_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (item_id, payload.message, int(payload.enabled), payload.sort_order,
+             payload.starts_at, payload.ends_at, utc_now()))
+        row = conn.execute("SELECT * FROM announcements WHERE id = ?", (item_id,)).fetchone()
+    return dict(row)
+
+
+@app.put("/api/v1/admin/home-content/announcements/{item_id}")
+def update_announcement(item_id: str, payload: AnnouncementInput, _: dict = Depends(admin_claims)) -> dict:
+    with database() as conn:
+        cursor = conn.execute("""UPDATE announcements SET message = ?, enabled = ?, sort_order = ?,
+            starts_at = ?, ends_at = ?, updated_at = ? WHERE id = ?""",
+            (payload.message, int(payload.enabled), payload.sort_order, payload.starts_at,
+             payload.ends_at, utc_now(), item_id))
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Announcement not found")
+        row = conn.execute("SELECT * FROM announcements WHERE id = ?", (item_id,)).fetchone()
+    return dict(row)
+
+
+@app.delete("/api/v1/admin/home-content/announcements/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_announcement(item_id: str, _: dict = Depends(admin_claims)) -> Response:
+    with database() as conn:
+        cursor = conn.execute("DELETE FROM announcements WHERE id = ?", (item_id,))
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Announcement not found")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

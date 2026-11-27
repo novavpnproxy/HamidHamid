@@ -225,15 +225,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     dense: true,
                   ),
-                  Divider(height: 1, color: _lightTheme ? const Color(0xFFD8E3F0) : const Color(0xFF2B2933)),
-                  _comingSoonRow(
-                    icon: Icons.mail_outline_rounded,
-                    title: _fa ? 'تماس با ما' : 'Contact us',
-                    subtitle: _fa
-                        ? 'راه ارتباطی رسمی هنوز ثبت نشده است'
-                        : 'An official contact channel has not been configured',
+                  const Divider(height: 1, color: Color(0xFF2B2933)),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.mail_outline_rounded,
+                      color: Color(0xFF4D91FF),
+                      size: 20,
+                    ),
+                    title: Text(
+                      _fa ? 'تماس با ما' : 'Contact us',
+                      style: TextStyle(
+                        color: _lightTheme
+                            ? const Color(0xFF263B59)
+                            : const Color(0xFFE0DFE7),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    subtitle: const SelectableText(
+                      'mynovavpnproxy@gmail.com',
+                      textDirection: TextDirection.ltr,
+                      style: TextStyle(
+                        color: Color(0xFF4D91FF),
+                        fontSize: 12,
+                      ),
+                    ),
+                    dense: true,
                   ),
-                  Divider(height: 1, color: _lightTheme ? const Color(0xFFD8E3F0) : const Color(0xFF2B2933)),
+                  const Divider(height: 1, color: Color(0xFF2B2933)),
                   _comingSoonRow(
                     icon: Icons.help_outline_rounded,
                     title: _fa ? 'سؤالات متداول' : 'Frequently asked questions',
@@ -241,7 +260,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ? 'راهنمای برنامه در حال آماده‌سازی است'
                         : 'The app guide is being prepared',
                   ),
-                  Divider(height: 1, color: _lightTheme ? const Color(0xFFD8E3F0) : const Color(0xFF2B2933)),
+                  const Divider(height: 1, color: Color(0xFF2B2933)),
                   _comingSoonRow(
                     icon: Icons.privacy_tip_outlined,
                     title: _fa ? 'سیاست حفظ حریم خصوصی' : 'Privacy policy',
@@ -249,7 +268,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ? 'پیش از انتشار عمومی باید تکمیل شود'
                         : 'Must be completed before public release',
                   ),
-                  Divider(height: 1, color: _lightTheme ? const Color(0xFFD8E3F0) : const Color(0xFF2B2933)),
+                  const Divider(height: 1, color: Color(0xFF2B2933)),
                   _comingSoonRow(
                     icon: Icons.description_outlined,
                     title: _fa ? 'شرایط استفاده از خدمات' : 'Terms of service',
@@ -257,7 +276,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ? 'پیش از انتشار عمومی باید تکمیل شود'
                         : 'Must be completed before public release',
                   ),
-                  Divider(height: 1, color: _lightTheme ? const Color(0xFFD8E3F0) : const Color(0xFF2B2933)),
+                  const Divider(height: 1, color: Color(0xFF2B2933)),
                   ListTile(
                     enabled: false,
                     leading: const Icon(Icons.info_outline_rounded,
