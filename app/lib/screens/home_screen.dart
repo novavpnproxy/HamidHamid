@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/vpn_server.dart';
 import '../services/api_service.dart';
 import '../services/connection_failover.dart';
+import '../services/app_localizations.dart';
 import '../services/storage_service.dart';
 import '../services/vpn_service.dart';
 import 'server_list_screen.dart';
@@ -59,7 +60,9 @@ class _HomeScreenState extends State<HomeScreen>
   int _homeAdIndex = 0;
   Timer? _homeRotationTimer;
 
-  bool get _fa => _language == 'fa';
+  bool get _fa => _language == 'fa' || _language == 'fa-AF';
+  bool get _rtl => NovaLocalizations.isRtl(_language);
+  String _t(String key) => NovaLocalizations.text(_language, key);
   bool get _connected => _connection == _ConnectionUi.connected;
 
   @override
@@ -755,9 +758,9 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   String get _stateLabel => switch (_connection) {
-        _ConnectionUi.disconnected => _fa ? 'قطع' : 'Disconnected',
-        _ConnectionUi.connecting => _fa ? 'در حال اتصال' : 'Connecting',
-        _ConnectionUi.connected => _fa ? 'متصل' : 'Connected',
+        _ConnectionUi.disconnected => _t('disconnected'),
+        _ConnectionUi.connecting => _t('connecting'),
+        _ConnectionUi.connected => _t('connected'),
         _ConnectionUi.disconnecting => _fa ? 'در حال قطع' : 'Disconnecting',
         _ConnectionUi.error => _fa ? 'خطا' : 'Error',
       };
@@ -831,7 +834,7 @@ class _HomeScreenState extends State<HomeScreen>
                     fontStyle: FontStyle.italic,
                   )),
               const SizedBox(height: 22),
-              Text(_connection == _ConnectionUi.connected ? (_fa ? 'متصل شد' : 'Connected') : (_fa ? 'در حال اتصال' : 'Connecting'),
+              Text(_connection == _ConnectionUi.connected ? (_fa ? 'متصل شد' : 'Connected') : (_t('connecting')),
                   style: const TextStyle(
                       color: Color(0xFF4C91FF),
                       fontSize: 14,
@@ -920,7 +923,7 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     if (_showConnectingPage) {
       return Directionality(
-        textDirection: _fa ? TextDirection.rtl : TextDirection.ltr,
+        textDirection: _rtl ? TextDirection.rtl : TextDirection.ltr,
         child: _buildConnectingPage(),
       );
     }
@@ -931,7 +934,7 @@ class _HomeScreenState extends State<HomeScreen>
         : (_fa ? 'Auto Location' : 'Auto Location');
 
     return Directionality(
-      textDirection: _fa ? TextDirection.rtl : TextDirection.ltr,
+      textDirection: _rtl ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: _lightTheme ? const Color(0xFFF2F6FC) : const Color(0xFF0B0A10),
         body: SafeArea(
@@ -1107,7 +1110,7 @@ class _HomeScreenState extends State<HomeScreen>
                 const SizedBox(height: 14),
                 Text(
                   _connected
-                      ? (_fa ? 'متصل' : 'Connected')
+                      ? (_t('connected'))
                       : _stateLabel,
                   style: TextStyle(
                     color: _connected
@@ -1145,7 +1148,7 @@ class _HomeScreenState extends State<HomeScreen>
                         children: [
                           Expanded(
                             child: Text(
-                              _fa ? 'انتخاب سرور' : 'Select server',
+                              _t('selectServer'),
                               style: const TextStyle(
                                   color: Color(0xFFAAA8B3), fontSize: 10),
                             ),
