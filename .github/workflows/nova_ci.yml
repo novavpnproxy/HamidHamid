@@ -106,3 +106,5 @@ jobs:
           name: nova-vpn-debug-apk
           path: app/build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
+
+# Trigger a clean CI run from the novavpnproxy account.
