@@ -74,12 +74,29 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   children: [
                     const Spacer(flex: 3),
-                    Image.asset(
-                      'assets/brand/nova_logo_new.jpg',
-                      width: 220,
-                      height: 220,
-                      fit: BoxFit.contain,
-                      filterQuality: FilterQuality.high,
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(34),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x9938CFFF),
+                            blurRadius: 34,
+                            spreadRadius: 3,
+                          ),
+                          BoxShadow(
+                            color: Color(0x88FFFF33),
+                            blurRadius: 48,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/brand/nova_logo_new.jpg',
+                        width: 220,
+                        height: 220,
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.high,
+                      ),
                     ),
                     const SizedBox(height: 22),
                     const Text(
