@@ -57,7 +57,7 @@ class _SplashScreenState extends State<SplashScreen>
         backgroundColor: _lightTheme ? const Color(0xFFF2F7FF) : const Color(0xFF091321),
         body: Container(
           width: double.infinity,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
