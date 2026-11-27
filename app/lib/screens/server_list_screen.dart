@@ -24,7 +24,9 @@ class _ServerListScreenState extends State<ServerListScreen> {
   int _tab = 0;
   bool _savedListsLoaded = false;
 
-  bool get _fa => widget.language == 'fa';
+  bool get _fa => widget.language == 'fa' || widget.language == 'fa-AF';
+  bool get _rtl => NovaLocalizations.isRtl(widget.language);
+  String _t(String key) => NovaLocalizations.text(widget.language, key);
 
   @override
   void initState() {
