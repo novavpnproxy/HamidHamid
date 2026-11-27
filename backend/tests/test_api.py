@@ -121,7 +121,7 @@ def test_home_content_supports_manual_ads_and_rotating_announcements(client):
     })
     assert network.status_code == 200
     assert client.get("/api/v1/home-content").json()["ad_mode"] == "network"
-    assert client.get("/api/v1/admin/home-content").status_code == 200
+    assert client.get("/api/v1/admin/home-content", headers=headers).status_code == 200
 
 
 def test_home_content_admin_routes_require_authentication(client):
