@@ -366,7 +366,7 @@ class _NovaWordParticlesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _NovaWordParticlesPainter oldDelegate) =>
-      oldDelegate.progress != progress;
+      oldDelegate.progress != progress || oldDelegate.lightTheme != lightTheme;
 }
 
 /// Rotating neon trails orbit the NOVA letter N, matching the lower emblem
