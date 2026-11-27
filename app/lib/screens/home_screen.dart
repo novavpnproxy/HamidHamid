@@ -54,6 +54,8 @@ class _HomeScreenState extends State<HomeScreen>
   int _currentAttempt = 0;
   int _attemptCount = 0;
   bool _refreshing = false;
+  // Retained for the existing reachability refresh flow.
+  // ignore: unused_field
   bool? _internetAvailable;
   HomeContent? _homeContent;
   int _announcementIndex = 0;
