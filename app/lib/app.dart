@@ -52,3 +52,4 @@ class NovaVpnApp extends StatelessWidget {
         ),
         home: const SplashScreen(),
       );
+}
