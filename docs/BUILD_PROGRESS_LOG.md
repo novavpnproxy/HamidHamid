@@ -129,3 +129,17 @@ Validation status for these latest visual refinements:
 - Branding review: `JEYRAN GROUP` is correctly spelled and remains on the splash screen as previously requested; it is not intended as a Home footer. No unrelated footer/date text was added.
 - Existing behavior review: the connection screen still uses real engine status, selected server, failover attempt count, and cancellation; the countdown still starts on `CONNECTED` and resets on `DISCONNECTED`. The countdown is in-process and is not a persistent background timer if Android kills the app.
 - Validation limitation: no Flutter analyzer, widget tests, APK build, or physical-device test was run for these two commits in this session. Do not describe the new animation as compile-verified or device-tested until a supported build environment runs those checks. GitHub Actions quota is not assumed available.
+
+
+## 2026-11-27 — Nova UI refinement and verified Android build
+
+- Rebased the working implementation on the current mainline engine/backend behavior rather than replacing the working Vox integration with the older UI branch. Preserved the Vox client, Vox-backed profile delivery, Render environment configuration, API tests, and the engine's active data-plane verification.
+- Kept the existing connection engine and fallback path. Auto failover treats only HTTP 401/403/429 and VPN permission failures as fatal; server-specific errors continue to the next candidate.
+- Updated disconnect handling to issue repeated native stop requests and wait for a fresh DISCONNECTED status, with a 15-second timeout, instead of treating a stale UI state as a completed disconnect.
+- Updated the connection UI: four rotating cyan/blue/violet/magenta neon rings around the NOVA core; a minimum three-second connecting transition that remains visible until connection finishes; a wider, shorter horizontal power control; and a larger countdown shown as MM:SS from 120:00 to 00:00.
+- Updated the splash to four seconds and retained the exact dedication text JEYRAN GROUP. Settings contact remains mynovavpnproxy@gmail.com. Favorites/Recent server selection remains enabled.
+- Changed the V2Ray plugin dependency to the public fork at https://github.com/khadamatvanezafatejeyran-bot/flutter_v2ray_client.git, pinned to 138faaddc216ef2b2960a0acd265151f065234e3, so CI can resolve it without private-repository credentials.
+- Fixed the particle-splash widget test to assert the NOVA particle logo and branding, and corrected the missing closing brace in app/lib/app.dart.
+- Automated validation passed on workflow run 45940131730: backend pytest, Dart formatting, Flutter analyzer, Flutter tests, and Android debug APK build.
+- Optimized release-mode build passed on workflow run 45941067703. Artifact: nova-vpn-arm64-release-apk (artifact ID 15173381096). Extracted APK size: 135,618,009 bytes; SHA-256: 87fe617e7da3a9c3a52593e2a1bccf5ed9646f5f414ff399175ac2ec54c62f5c.
+- Source branch: novavpnproxy/HamidHamid:restore/nova-working-source. Pull request #1 is open; main remains unchanged. Do not merge until the new APK is installed and the actual VPN connection, Auto fallback, and one-tap disconnect are verified on-device.
