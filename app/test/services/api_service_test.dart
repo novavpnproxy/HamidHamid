@@ -41,6 +41,9 @@ void main() {
   group('ApiService', () {
     test('parses public server metadata', () async {
       final client = MockClient((request) async {
+        if (request.url.path == '/api/v1/vox/locations') {
+          return http.Response(jsonEncode({'locations': []}), 200);
+        }
         expect(request.url.path, '/api/v1/servers');
         expect(request.headers['cache-control'], 'no-store');
 
@@ -185,9 +188,13 @@ void main() {
 
     test('allows emulator loopback HTTP for local development', () async {
       final api = ApiService(
-        client: MockClient(
-          (_) async => http.Response('{"servers":[]}', 200),
-        ),
+        client: MockClient((request) async {
+          if (request.url.path == '/api/v1/servers') {
+            return http.Response('{"servers":[]}', 200);
+          }
+          expect(request.url.path, '/api/v1/vox/locations');
+          return http.Response('{"locations":[]}', 200);
+        }),
         baseUrl: 'http://10.0.2.2:8000',
       );
 
