@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 const _novaColors = <Color>[
   Color(0xFF28D7FF),
   Color(0xFF397BFF),
-  Color(0xFF8A5CFF),
-  Color(0xFFE04DFF),
+  Color(0xFF27E0D0),
+  Color(0xFF43E8C8),
   Color(0xFF35F0C5),
-  Color(0xFFFF5EB8),
+  Color(0xFF7CEBFF),
 ];
 
 /// Thousands of luminous particles converge into the NOVA wordmark.
@@ -199,7 +199,7 @@ class _NovaOrbitPainter extends CustomPainter {
         final color = switch (palette) {
           0 => const Color(0xFF31D8FF),
           1 => const Color(0xFF438CFF),
-          _ => const Color(0xFF8A68FF),
+          _ => const Color(0xFF27E0D0),
         };
         final dotRadius = (front ? 1.25 : .85) +
             .35 * (1 + math.sin(rotation * 2 + lonIndex * .31)) / 2;
@@ -231,7 +231,7 @@ class _NovaOrbitPainter extends CustomPainter {
           letterSpacing: 1.7,
           shadows: [
             Shadow(color: Color(0xFF2B8CFF), blurRadius: 16),
-            Shadow(color: Color(0xFF8D4DFF), blurRadius: 22),
+            Shadow(color: Color(0xFF27E0D0), blurRadius: 22),
           ],
         ),
       ),
@@ -336,10 +336,10 @@ class _NovaWordParticlesPainter extends CustomPainter {
     final palette = [
       const Color(0xFF28D7FF),
       const Color(0xFF397BFF),
-      const Color(0xFF8A5CFF),
-      const Color(0xFFE04DFF),
+      const Color(0xFF27E0D0),
+      const Color(0xFF43E8C8),
       const Color(0xFF35F0C5),
-      const Color(0xFFFF5EB8),
+      const Color(0xFF7CEBFF),
     ];
 
     for (var i = 0; i < targets.length; i++) {
@@ -428,7 +428,7 @@ class _NovaOrbitNPainter extends CustomPainter {
           color: lightTheme ? const Color(0xFF123B68) : const Color(0xFFF0FCFF),
           shadows: [
             Shadow(color: const Color(0xFF28D7FF), blurRadius: 18),
-            Shadow(color: const Color(0xFF8A5CFF), blurRadius: 27),
+            Shadow(color: const Color(0xFF27E0D0), blurRadius: 27),
             Shadow(color: const Color(0xFFFFFFFF).withValues(alpha: .55), blurRadius: 7),
           ],
         ),
@@ -438,8 +438,8 @@ class _NovaOrbitNPainter extends CustomPainter {
     letter.paint(canvas, center - Offset(letter.width / 2, letter.height / 2));
 
     const colors = [
-      Color(0xFF20E5FF), Color(0xFF8A5CFF),
-      Color(0xFFFF4DB8), Color(0xFF35F0C5),
+      Color(0xFF20E5FF), Color(0xFF27E0D0),
+      Color(0xFF43E8C8), Color(0xFF35F0C5),
     ];
     for (var i = 0; i < colors.length; i++) {
       final direction = i.isEven ? 1.0 : -1.0;
