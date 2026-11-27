@@ -3,12 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 const _novaColors = <Color>[
-  Color(0xFF28D7FF),
-  Color(0xFF397BFF),
-  Color(0xFF27E0D0),
-  Color(0xFF43E8C8),
-  Color(0xFF35F0C5),
-  Color(0xFF7CEBFF),
+  Color(0xFF38CFFF),
+  Color(0xFFFFFF33),
 ];
 
 /// Thousands of luminous particles converge into the NOVA wordmark.
@@ -86,7 +82,7 @@ class _NovaParticlesPainter extends CustomPainter {
     line(95, 65, 107, 65, 130);
 
     final glowPaint = Paint()
-      ..color = const Color(0xFF398CFF).withValues(alpha: .10)
+      ..color = const Color(0xFF38CFFF).withValues(alpha: .24)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
     canvas.drawCircle(center, side * .37, glowPaint);
 
@@ -113,7 +109,7 @@ class _NovaParticlesPainter extends CustomPainter {
     final orbitPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
-      ..color = const Color(0xFF2ACFFF).withValues(alpha: .24);
+      ..color = const Color(0xFFFFFF33).withValues(alpha: .62);
     canvas.drawOval(
       Rect.fromCenter(center: center, width: side * .92, height: side * .30),
       orbitPaint,
@@ -170,7 +166,7 @@ class _NovaOrbitPainter extends CustomPainter {
     final rotation = progress * math.pi * 2;
 
     final glow = Paint()
-      ..color = const Color(0xFF278CFF).withValues(alpha: .13)
+      ..color = const Color(0xFF38CFFF).withValues(alpha: .30)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 24);
     canvas.drawCircle(center, radius * 1.12, glow);
 
@@ -197,9 +193,8 @@ class _NovaOrbitPainter extends CustomPainter {
         final alpha = front ? .88 : .22;
         final palette = (latIndex + lonIndex ~/ 8) % 3;
         final color = switch (palette) {
-          0 => const Color(0xFF31D8FF),
-          1 => const Color(0xFF438CFF),
-          _ => const Color(0xFF27E0D0),
+          0 => const Color(0xFF38CFFF),
+          _ => const Color(0xFFFFFF33),
         };
         final dotRadius = (front ? 1.25 : .85) +
             .35 * (1 + math.sin(rotation * 2 + lonIndex * .31)) / 2;
@@ -211,7 +206,7 @@ class _NovaOrbitPainter extends CustomPainter {
     final orbitPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1
-      ..color = const Color(0xFF39CFFF).withValues(alpha: .32);
+      ..color = const Color(0xFFFFFF33).withValues(alpha: .72);
     canvas.drawOval(
       Rect.fromCenter(
         center: center,
@@ -230,8 +225,8 @@ class _NovaOrbitPainter extends CustomPainter {
           fontWeight: FontWeight.w900,
           letterSpacing: 1.7,
           shadows: [
-            Shadow(color: Color(0xFF2B8CFF), blurRadius: 16),
-            Shadow(color: Color(0xFF27E0D0), blurRadius: 22),
+            Shadow(color: Color(0xFF38CFFF), blurRadius: 24),
+            Shadow(color: Color(0xFFFFFF33), blurRadius: 30),
           ],
         ),
       ),
@@ -333,14 +328,7 @@ class _NovaWordParticlesPainter extends CustomPainter {
     final phase = Curves.easeInOutCubic.transform(
       (progress / .75).clamp(0.0, 1.0),
     );
-    final palette = [
-      const Color(0xFF28D7FF),
-      const Color(0xFF397BFF),
-      const Color(0xFF27E0D0),
-      const Color(0xFF43E8C8),
-      const Color(0xFF35F0C5),
-      const Color(0xFF7CEBFF),
-    ];
+    const palette = [Color(0xFF38CFFF), Color(0xFFFFFF33)];
 
     for (var i = 0; i < targets.length; i++) {
       final target = targets[i];
@@ -415,7 +403,7 @@ class _NovaOrbitNPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final side = math.min(size.width, size.height);
     final glow = Paint()
-      ..color = const Color(0xFF16BFFF).withValues(alpha: lightTheme ? .18 : .38)
+      ..color = const Color(0xFF38CFFF).withValues(alpha: lightTheme ? .28 : .52)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22);
     canvas.drawCircle(center, side * .39, glow);
 
@@ -427,8 +415,8 @@ class _NovaOrbitNPainter extends CustomPainter {
           fontWeight: FontWeight.w900,
           color: lightTheme ? const Color(0xFF123B68) : const Color(0xFFF0FCFF),
           shadows: [
-            Shadow(color: const Color(0xFF28D7FF), blurRadius: 18),
-            Shadow(color: const Color(0xFF27E0D0), blurRadius: 27),
+            Shadow(color: const Color(0xFF38CFFF), blurRadius: 26),
+            Shadow(color: const Color(0xFFFFFF33), blurRadius: 34),
             Shadow(color: const Color(0xFFFFFFFF).withValues(alpha: .55), blurRadius: 7),
           ],
         ),
@@ -437,10 +425,7 @@ class _NovaOrbitNPainter extends CustomPainter {
     )..layout();
     letter.paint(canvas, center - Offset(letter.width / 2, letter.height / 2));
 
-    const colors = [
-      Color(0xFF20E5FF), Color(0xFF27E0D0),
-      Color(0xFF43E8C8), Color(0xFF35F0C5),
-    ];
+    const colors = [Color(0xFF38CFFF), Color(0xFFFFFF33)];
     for (var i = 0; i < colors.length; i++) {
       final direction = i.isEven ? 1.0 : -1.0;
       final speed = 1.0 + i * .24;
@@ -453,9 +438,9 @@ class _NovaOrbitNPainter extends CustomPainter {
       final ringRect = Rect.fromCenter(center: Offset.zero, width: width, height: height);
       final glowRing = Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 5.2
+        ..strokeWidth = 7.0
         ..color = colors[i].withValues(alpha: .48)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 13);
       canvas.drawOval(ringRect, glowRing);
       final ring = Paint()
         ..style = PaintingStyle.stroke
