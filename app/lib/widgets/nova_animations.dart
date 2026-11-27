@@ -122,7 +122,7 @@ class _NovaParticlesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _NovaParticlesPainter oldDelegate) =>
-      oldDelegate.progress != progress;
+      oldDelegate.progress != progress || oldDelegate.lightTheme != lightTheme;
 }
 
 /// Bright, lightweight orbital animation for the connecting screen.
@@ -249,9 +249,10 @@ class _NovaOrbitPainter extends CustomPainter {
 /// Particle-built NOVA VPN wordmark: three seconds of convergence, then one
 /// second of stillness so the completed lettering can be read.
 class NovaWordParticleAnimation extends StatefulWidget {
-  const NovaWordParticleAnimation({super.key, required this.width});
+  const NovaWordParticleAnimation({super.key, required this.width, this.lightTheme = false});
 
   final double width;
+  final bool lightTheme;
 
   @override
   State<NovaWordParticleAnimation> createState() =>
@@ -276,15 +277,16 @@ class _NovaWordParticleAnimationState extends State<NovaWordParticleAnimation>
         animation: _controller,
         builder: (context, _) => CustomPaint(
           size: Size(widget.width, 126),
-          painter: _NovaWordParticlesPainter(_controller.value),
+          painter: _NovaWordParticlesPainter(_controller.value, lightTheme: widget.lightTheme),
         ),
       );
 }
 
 class _NovaWordParticlesPainter extends CustomPainter {
-  _NovaWordParticlesPainter(this.progress);
+  _NovaWordParticlesPainter(this.progress, {required this.lightTheme});
 
   final double progress;
+  final bool lightTheme;
 
   static const Map<String, List<String>> _glyphs = {
     'N': ['10001','11001','11001','10101','10011','10011','10001'],
@@ -349,12 +351,16 @@ class _NovaWordParticlesPainter extends CustomPainter {
       final point = Offset.lerp(start, target, phase)!;
       final twinkle = .78 + .22 * math.sin(progress * math.pi * 8 + i * .31).abs();
       final color = palette[i % palette.length];
+      final halo = Paint()
+        ..color = color.withValues(alpha: lightTheme ? .34 : .52)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.2);
+      canvas.drawCircle(point, cell * .23, halo);
       final paint = Paint()
         ..color = color.withValues(alpha: twinkle)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.6);
-      canvas.drawCircle(point, cell * .105, paint);
-      final core = Paint()..color = color.withValues(alpha: twinkle);
-      canvas.drawCircle(point, cell * .045, core);
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.2);
+      canvas.drawCircle(point, cell * .15, paint);
+      final core = Paint()..color = color.withValues(alpha: 1);
+      canvas.drawCircle(point, cell * .075, core);
     }
   }
 
@@ -366,9 +372,10 @@ class _NovaWordParticlesPainter extends CustomPainter {
 /// Rotating neon trails orbit the NOVA letter N, matching the lower emblem
 /// animation from the approved loading-page reference.
 class NovaOrbitNAnimation extends StatefulWidget {
-  const NovaOrbitNAnimation({super.key, this.size = 104});
+  const NovaOrbitNAnimation({super.key, this.size = 104, this.lightTheme = false});
 
   final double size;
+  final bool lightTheme;
 
   @override
   State<NovaOrbitNAnimation> createState() => _NovaOrbitNAnimationState();
@@ -392,35 +399,37 @@ class _NovaOrbitNAnimationState extends State<NovaOrbitNAnimation>
         animation: _controller,
         builder: (context, _) => CustomPaint(
           size: Size.square(widget.size),
-          painter: _NovaOrbitNPainter(_controller.value),
+          painter: _NovaOrbitNPainter(_controller.value, lightTheme: widget.lightTheme),
         ),
       );
 }
 
 class _NovaOrbitNPainter extends CustomPainter {
-  _NovaOrbitNPainter(this.progress);
+  _NovaOrbitNPainter(this.progress, {required this.lightTheme});
 
   final double progress;
+  final bool lightTheme;
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final side = math.min(size.width, size.height);
     final glow = Paint()
-      ..color = const Color(0xFF268CFF).withValues(alpha: .22)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
-    canvas.drawCircle(center, side * .36, glow);
+      ..color = const Color(0xFF16BFFF).withValues(alpha: lightTheme ? .18 : .38)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22);
+    canvas.drawCircle(center, side * .39, glow);
 
     final letter = TextPainter(
-      text: const TextSpan(
+      text: TextSpan(
         text: 'N',
         style: TextStyle(
-          fontSize: 65,
+          fontSize: side * .58,
           fontWeight: FontWeight.w900,
-          color: Color(0xFFB9F5FF),
+          color: lightTheme ? const Color(0xFF123B68) : const Color(0xFFF0FCFF),
           shadows: [
-            Shadow(color: Color(0xFF28D7FF), blurRadius: 13),
-            Shadow(color: Color(0xFF8A5CFF), blurRadius: 21),
+            Shadow(color: const Color(0xFF28D7FF), blurRadius: 18),
+            Shadow(color: const Color(0xFF8A5CFF), blurRadius: 27),
+            Shadow(color: const Color(0xFFFFFFFF).withValues(alpha: .55), blurRadius: 7),
           ],
         ),
       ),
@@ -428,33 +437,44 @@ class _NovaOrbitNPainter extends CustomPainter {
     )..layout();
     letter.paint(canvas, center - Offset(letter.width / 2, letter.height / 2));
 
-    final colors = [
-      const Color(0xFF28D7FF),
-      const Color(0xFF8A5CFF),
-      const Color(0xFFFF5EB8),
+    const colors = [
+      Color(0xFF20E5FF), Color(0xFF8A5CFF),
+      Color(0xFFFF4DB8), Color(0xFF35F0C5),
     ];
-    for (var i = 0; i < 3; i++) {
+    for (var i = 0; i < colors.length; i++) {
+      final direction = i.isEven ? 1.0 : -1.0;
+      final speed = 1.0 + i * .24;
+      final angle = progress * math.pi * 2 * direction * speed + i * .72;
+      final width = side * (.91 - i * .055);
+      final height = side * (.25 + i * .045);
       canvas.save();
       canvas.translate(center.dx, center.dy);
-      canvas.rotate(progress * math.pi * 2 * (i.isEven ? 1 : -1) * (i + 1) / 3);
-      final orbit = Paint()
+      canvas.rotate((i - 1.5) * .34 + math.sin(progress * math.pi * 2 + i) * .10);
+      final ringRect = Rect.fromCenter(center: Offset.zero, width: width, height: height);
+      final glowRing = Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.7 - i * .25
-        ..color = colors[i].withValues(alpha: .88)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset.zero,
-          width: side * (.88 - i * .10),
-          height: side * (.27 + i * .07),
-        ),
-        orbit,
-      );
+        ..strokeWidth = 5.2
+        ..color = colors[i].withValues(alpha: .48)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      canvas.drawOval(ringRect, glowRing);
+      final ring = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.15
+        ..color = colors[i].withValues(alpha: .98);
+      canvas.drawOval(ringRect, ring);
+      final orbitX = math.cos(angle) * width * .5;
+      final orbitY = math.sin(angle) * height * .5;
+      final cometGlow = Paint()
+        ..color = colors[i].withValues(alpha: .82)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      canvas.drawCircle(Offset(orbitX, orbitY), 5.2, cometGlow);
+      final cometCore = Paint()..color = Colors.white.withValues(alpha: .98);
+      canvas.drawCircle(Offset(orbitX, orbitY), 2.0, cometCore);
       canvas.restore();
     }
   }
 
   @override
   bool shouldRepaint(covariant _NovaOrbitNPainter oldDelegate) =>
-      oldDelegate.progress != progress;
+      oldDelegate.progress != progress || oldDelegate.lightTheme != lightTheme;
 }
