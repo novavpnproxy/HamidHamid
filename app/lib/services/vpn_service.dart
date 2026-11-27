@@ -123,9 +123,15 @@ class VpnService {
     }
   }
 
+  Future<List<Map<String, String>>> getInstalledApps() async {
+    await initialize();
+    return _engine.getInstalledApps();
+  }
+
   Future<void> connect({
     required String profile,
     required String remark,
+    List<String>? allowedApps,
     Duration timeout = const Duration(seconds: 25),
   }) async {
     if (_attemptInProgress) {
@@ -176,6 +182,7 @@ class VpnService {
           config: config,
           blockedApps: null,
           bypassSubnets: null,
+          allowedApps: allowedApps,
           proxyOnly: false,
           notificationDisconnectButtonName: 'DISCONNECT',
         );
