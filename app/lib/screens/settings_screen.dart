@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/app_localizations.dart';
 import '../services/storage_service.dart';
 import '../services/vpn_service.dart';
 
@@ -18,7 +19,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   List<Map<String, String>> _installedApps = <Map<String, String>>[];
   bool _loadingApps = false;
 
-  bool get _fa => _language == 'fa';
+  bool get _fa => _language == 'fa' || _language == 'fa-AF';
+  bool get _rtl => NovaLocalizations.isRtl(_language);
+  String _t(String key) => NovaLocalizations.text(_language, key);
 
   @override
   void initState() {
@@ -73,7 +76,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(color: _lightTheme ? const Color(0xFF71839B) : const Color(0xFF777580), fontSize: 10),
         ),
         trailing: Text(
-          _fa ? 'به‌زودی' : 'Soon',
+          _t('soon'),
           style: TextStyle(color: _lightTheme ? const Color(0xFF8192A8) : const Color(0xFF66646F), fontSize: 9),
         ),
         dense: true,
@@ -186,7 +189,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) => Directionality(
-        textDirection: _fa ? TextDirection.rtl : TextDirection.ltr,
+        textDirection: _rtl ? TextDirection.rtl : TextDirection.ltr,
         child: Scaffold(
           backgroundColor: _lightTheme ? const Color(0xFFF2F6FC) : const Color(0xFF100F15),
           body: SafeArea(
