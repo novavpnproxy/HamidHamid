@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nova_vpn_app/app.dart';
 import 'package:nova_vpn_app/widgets/nova_animations.dart';
