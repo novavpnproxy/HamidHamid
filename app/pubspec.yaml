@@ -15,7 +15,7 @@ dependencies:
   shared_preferences: ^2.3.2
   flutter_v2ray_client:
     git:
-      url: https://github.com/mynovavpnproxy1/flutter_v2ray_client.git
+      url: https://github.com/khadamatvanezafatejeyran-bot/flutter_v2ray_client.git
       ref: 138faaddc216ef2b2960a0acd265151f065234e3
 
 dev_dependencies:
