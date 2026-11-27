@@ -6,6 +6,7 @@ class StorageService {
   static const _lightThemeKey = 'nova.light_theme';
   static const _favoriteServersKey = 'nova.favorite_servers';
   static const _recentServersKey = 'nova.recent_servers';
+  static const _tunnelAppsKey = 'nova.tunnel_apps';
 
   Future<String?> readServerId() async =>
       (await SharedPreferences.getInstance()).getString(_serverKey);
@@ -28,6 +29,12 @@ class StorageService {
   Future<List<String>> readFavoriteServerIds() async =>
       (await SharedPreferences.getInstance())
           .getStringList(_favoriteServersKey) ?? <String>[];
+
+  Future<List<String>> readTunnelApps() async =>
+      (await SharedPreferences.getInstance()).getStringList(_tunnelAppsKey) ?? <String>[];
+
+  Future<void> writeTunnelApps(List<String> packageNames) async =>
+      (await SharedPreferences.getInstance()).setStringList(_tunnelAppsKey, packageNames.toSet().toList());
 
   Future<List<String>> readRecentServerIds() async =>
       (await SharedPreferences.getInstance())
