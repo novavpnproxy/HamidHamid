@@ -415,22 +415,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Divider(height: 1, color: Color(0xFF2B2933)),
                   _comingSoonRow(
                     icon: Icons.description_outlined,
-                    title: _t('faq'),
-                    subtitle: _fa
-                        ? 'راهنمای برنامه در حال آماده‌سازی است'
-                        : 'The app guide is being prepared',
-                  ),
-                  const Divider(height: 1, color: Color(0xFF2B2933)),
-                  _comingSoonRow(
-                    icon: Icons.privacy_tip_outlined,
-                    title: _t('privacy'),
-                    subtitle: _fa
-                        ? 'پیش از انتشار عمومی باید تکمیل شود'
-                        : 'Must be completed before public release',
-                  ),
-                  const Divider(height: 1, color: Color(0xFF2B2933)),
-                  _comingSoonRow(
-                    icon: Icons.description_outlined,
                     title: _t('terms'),
                     subtitle: _fa
                         ? 'پیش از انتشار عمومی باید تکمیل شود'
