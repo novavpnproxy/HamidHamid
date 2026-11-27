@@ -206,7 +206,25 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildAnnouncementBar() {
     final items = _homeContent?.announcements ?? const <HomeAnnouncement>[];
-    if (items.isEmpty) return const SizedBox.shrink();
+    if (items.isEmpty) {
+      return Container(
+        height: 28,
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: _lightTheme ? const Color(0xFFE3F1FF) : const Color(0xFF17263B),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: _lightTheme ? const Color(0xFF8CB9E7) : const Color(0xFF314A70)),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          _fa ? 'اطلاعیه‌های NOVA VPN' : 'NOVA VPN updates',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(color: _lightTheme ? const Color(0xFF1265A0) : const Color(0xFF75D9F2), fontSize: 11, fontWeight: FontWeight.w600),
+        ),
+      );
+    }
     final index = _announcementIndex % items.length;
     return Container(
       height: 28,
@@ -1122,10 +1140,8 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 const SizedBox(height: 16),
                 _buildHomeAdPlacement(),
-                if (_homeContent?.announcements.isNotEmpty == true) ...[
-                  const SizedBox(height: 10),
-                  _buildAnnouncementBar(),
-                ],
+                const SizedBox(height: 10),
+                _buildAnnouncementBar(),
                 const SizedBox(height: 14),
                 Container(
                   width: double.infinity,
