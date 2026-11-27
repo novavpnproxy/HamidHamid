@@ -17,8 +17,7 @@ dependencies:
   flutter_v2ray_client:
     git:
       url: https://github.com/novavpnproxy/flutter_v2ray_client.git
-      ref: feature/android-per-app-routing
-      ref: b952ca9794063dd2ecdfc43b277d6b7b3662bc93
+      ref: a7efa90efcb314ac9953da76ca7e55e630d96de6
 
 dev_dependencies:
   flutter_test:
