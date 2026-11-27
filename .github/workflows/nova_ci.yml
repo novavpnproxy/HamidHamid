@@ -83,6 +83,8 @@ jobs:
         run: flutter pub get
       - name: Generate NOVA Android launcher icons
         run: dart run flutter_launcher_icons
+      - name: Apply NOVA native launch screen theme
+        run: bash tool/configure_android_splash.sh
       - name: Format Dart sources
         run: dart format lib test
       - name: Check Dart formatting
