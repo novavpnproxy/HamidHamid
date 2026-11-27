@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../widgets/nova_animations.dart';
+import '../services/storage_service.dart';
 import 'home_screen.dart';
 
 class LoadingScreen extends StatefulWidget {
@@ -14,10 +15,14 @@ class LoadingScreen extends StatefulWidget {
 
 class _LoadingScreenState extends State<LoadingScreen> {
   Timer? _timer;
+  bool _lightTheme = false;
 
   @override
   void initState() {
     super.initState();
+    StorageService().readLightTheme().then((value) {
+      if (mounted) setState(() => _lightTheme = value);
+    });
     _timer = Timer(const Duration(seconds: 4), () {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
@@ -34,18 +39,16 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: const Color(0xFF091321),
+        backgroundColor: _lightTheme ? const Color(0xFFF2F7FF) : const Color(0xFF091321),
         body: Container(
           width: double.infinity,
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFF101A2B),
-                Color(0xFF091321),
-                Color(0xFF07101C),
-              ],
+              colors: _lightTheme
+                  ? const [Color(0xFFF9FCFF), Color(0xFFEAF3FF), Color(0xFFDCEBFF)]
+                  : const [Color(0xFF101A2B), Color(0xFF091321), Color(0xFF07101C)],
             ),
           ),
           child: SafeArea(
@@ -60,6 +63,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
                         width: double.infinity,
                         child: NovaWordParticleAnimation(
                           width: MediaQuery.sizeOf(context).width - 36,
+                          lightTheme: _lightTheme,
                         ),
                       ),
                     ),
@@ -69,7 +73,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
                     'NOVA VPN',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Color(0xFFF7FBFF),
+                      color: _lightTheme ? const Color(0xFF173B65) : const Color(0xFFF7FBFF),
                       fontSize: 28,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 3.2,
@@ -86,7 +90,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
                     textAlign: TextAlign.center,
                     textDirection: TextDirection.rtl,
                     style: TextStyle(
-                      color: Color(0xFFFF4655),
+                      color: const Color(0xFFFF4655),
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
                       shadows: [
@@ -96,7 +100,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const NovaOrbitNAnimation(size: 104),
+                  NovaOrbitNAnimation(size: 112, lightTheme: _lightTheme),
                   const SizedBox(height: 8),
                   const SizedBox(
                     width: 92,
@@ -110,10 +114,29 @@ class _LoadingScreenState extends State<LoadingScreen> {
                     ),
                   ),
                   const Spacer(flex: 1),
+                  const _LoadingBrandFooter(),
                 ],
               ),
             ),
           ),
         ),
+      );
+}
+
+
+class _LoadingBrandFooter extends StatelessWidget {
+  const _LoadingBrandFooter();
+  @override
+  Widget build(BuildContext context) => const Padding(
+        padding: EdgeInsets.only(bottom: 8),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('30071366', textDirection: TextDirection.ltr,
+              style: TextStyle(color: Color(0xFF36B9FF), fontSize: 14,
+                  fontWeight: FontWeight.w900, letterSpacing: 2.2)),
+          SizedBox(height: 3),
+          Text('4.6.6.0', textDirection: TextDirection.ltr,
+              style: TextStyle(color: Color(0xFF36B9FF), fontSize: 12,
+                  fontWeight: FontWeight.w800, letterSpacing: 1.5)),
+        ]),
       );
 }
