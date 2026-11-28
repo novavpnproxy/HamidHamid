@@ -246,14 +246,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         color: _lightTheme ? const Color(0xFF49688F) : const Color(0xFFE0DFE6), size: 20),
                   ],
                 ),
-                _sectionTitle(_t('account')),
+                _sectionTitle(_fa ? 'اشتراک' : 'Subscription'),
                 _settingsCard([
                   _comingSoonRow(
-                    icon: Icons.person_add_alt_1_rounded,
-                    title: _t('join'),
+                    icon: Icons.workspace_premium_rounded,
+                    title: _fa ? 'خرید اشتراک' : 'Buy subscription',
                     subtitle: _fa
-                        ? 'ساخت و مدیریت حساب کاربری به‌زودی'
-                        : 'Account creation and management coming soon',
+                        ? 'خرید اشتراک در به‌روزرسانی بعدی فعال می‌شود'
+                        : 'Subscription purchases will be enabled in a future update',
                   ),
                 ]),
 
