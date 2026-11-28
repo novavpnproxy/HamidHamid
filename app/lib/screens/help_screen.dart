@@ -47,7 +47,7 @@ class NovaHelpScreen extends StatelessWidget {
     : 'Nova VPN does not ask you for a name, phone number, or personal email address to create an account, and does not collect those identity details.\n\nTo provide and manage the VPN connection, essential technical data such as an installation or device identifier, connection status, and technical error information may be processed. This data supports troubleshooting, security, and service operation; it is different from identity details such as your name or phone number.\n\nPlease do not include sensitive information in support messages. For privacy questions, email mynovavpnproxy@gmail.com.\n\nThis notice must remain consistent with the actual data processing performed by the released app and its server infrastructure.';
 
   String get termsText => fa
-    ? 'به Nova VPN خوش آمدید. با نصب، باز کردن یا استفاده از برنامه، این شرایط را می‌پذیرید. اگر با آن‌ها موافق نیستید، از برنامه استفاده نکنید.
+    ? '''به Nova VPN خوش آمدید. با نصب، باز کردن یا استفاده از برنامه، این شرایط را می‌پذیرید. اگر با آن‌ها موافق نیستید، از برنامه استفاده نکنید.
 
 ۱. ماهیت سرویس
 Nova VPN ابزاری برای ایجاد اتصال VPN و عبور دادن بخشی از ترافیک اینترنت دستگاه از سرورهای در دسترس برنامه است. دسترسی به سرورها و امکانات ممکن است با توجه به وضعیت فنی، ظرفیت، نگهداری یا محدودیت‌های شبکه تغییر کند.
@@ -73,8 +73,8 @@ Nova VPN ابزاری برای ایجاد اتصال VPN و عبور دادن ب
 ۸. تغییر شرایط و تماس
 ممکن است این شرایط به‌روزرسانی شوند؛ نسخه جدید در همین صفحه منتشر می‌شود. ادامه استفاده پس از انتشار تغییرات به معنی پذیرش نسخه به‌روز‌شده است. برای پرسش یا گزارش مشکل با mynovavpnproxy@gmail.com تماس بگیرید.
 
-تاریخ آخرین به‌روزرسانی: ۲۸ نوامبر ۲۰۲۶'
-    : 'Welcome to Nova VPN. By installing, opening, or using the app, you agree to these terms. If you do not agree, do not use the app.
+تاریخ آخرین به‌روزرسانی: ۲۸ نوامبر ۲۰۲۶'''
+    : '''Welcome to Nova VPN. By installing, opening, or using the app, you agree to these terms. If you do not agree, do not use the app.
 
 1. Service description
 Nova VPN is a tool that creates a VPN connection and routes some of your device’s internet traffic through servers made available by the app. Server and feature availability may change due to technical conditions, capacity, maintenance, or network restrictions.
@@ -100,7 +100,7 @@ You must comply with laws applicable where you use the service. Nova VPN does no
 8. Changes and contact
 These terms may be updated; the latest version will be published on this page. Continued use after changes are published means you accept the updated terms. For questions or problem reports, contact mynovavpnproxy@gmail.com.
 
-Last updated: November 28, 2026';
+Last updated: November 28, 2026''';
 
   Future<void> contact(BuildContext context) async {
     final uri = Uri(scheme: 'mailto', path: 'mynovavpnproxy@gmail.com', queryParameters: {'subject': 'Nova VPN Support'});
