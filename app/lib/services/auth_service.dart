@@ -39,7 +39,10 @@ class AuthService {
         .post(
           base.resolve('/api/v1/client/register'),
           headers: const {'Content-Type': 'application/json'},
-          body: jsonEncode({'device_id': deviceId}),
+          body: jsonEncode({
+            'device_id': deviceId,
+            'stable_device_id': await _deviceService.getStableDeviceId(),
+          }),
         )
         .timeout(const Duration(seconds: 15));
 
