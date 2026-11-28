@@ -25,6 +25,12 @@ class RegistrationPayload(BaseModel):
         max_length=64,
         pattern=r"^[a-f0-9]{64}$",
     )
+    stable_device_id: str | None = Field(
+        default=None,
+        min_length=64,
+        max_length=64,
+        pattern=r"^[a-f0-9]{64}$",
+    )
 
 
 class DevicePermissionPayload(BaseModel):
@@ -62,6 +68,16 @@ def install_profile_delivery(
                 )
                 """
             )
+            if conn._postgres:
+                columns = {row["column_name"] for row in conn.execute(
+                    "SELECT column_name FROM information_schema.columns "
+                    "WHERE table_schema = current_schema() AND table_name = 'client_devices'"
+                ).fetchall()}
+            else:
+                columns = {row["name"] for row in conn.execute("PRAGMA table_info(client_devices)").fetchall()}
+            if "stable_device_id" not in columns:
+                conn.execute("ALTER TABLE client_devices ADD COLUMN stable_device_id TEXT")
+            conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_client_devices_stable_id ON client_devices(stable_device_id)")
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS app_migrations (
                     name TEXT PRIMARY KEY,
@@ -167,47 +183,60 @@ def install_profile_delivery(
         timestamp = now.isoformat()
 
         with database() as conn:
-            conn.execute(
-                """
-                INSERT INTO client_devices (
-                    device_id,
-                    first_seen_at,
-                    last_seen_at,
-                    enabled
+            canonical_id = payload.device_id
+            row = None
+            if payload.stable_device_id:
+                row = conn.execute(
+                    "SELECT device_id, enabled FROM client_devices WHERE stable_device_id = ?",
+                    (payload.stable_device_id,),
+                ).fetchone()
+                if row is not None:
+                    canonical_id = row["device_id"]
+
+            if row is None:
+                row = conn.execute(
+                    "SELECT device_id, enabled FROM client_devices WHERE device_id = ?",
+                    (payload.device_id,),
+                ).fetchone()
+
+            if row is None:
+                conn.execute(
+                    """
+                    INSERT INTO client_devices (
+                        device_id, first_seen_at, last_seen_at, enabled, stable_device_id
+                    ) VALUES (?, ?, ?, 1, ?)
+                    """,
+                    (canonical_id, timestamp, timestamp, payload.stable_device_id),
                 )
-                VALUES (?, ?, ?, 1)
-                ON CONFLICT (device_id) DO UPDATE SET
-                    last_seen_at = excluded.last_seen_at
-                """,
-                (
-                    payload.device_id,
-                    timestamp,
-                    timestamp,
-                ),
-            )
+            else:
+                canonical_id = row["device_id"]
+                conn.execute(
+                    """
+                    UPDATE client_devices
+                    SET last_seen_at = ?,
+                        stable_device_id = COALESCE(stable_device_id, ?)
+                    WHERE device_id = ?
+                    """,
+                    (timestamp, payload.stable_device_id, canonical_id),
+                )
 
             row = conn.execute(
-                """
-                SELECT enabled
-                FROM client_devices
-                WHERE device_id = ?
-                """,
-                (payload.device_id,),
+                "SELECT enabled FROM client_devices WHERE device_id = ?",
+                (canonical_id,),
             ).fetchone()
-
-            registered = row is not None
+            registered = row is not None and bool(row["enabled"])
 
         if not registered:
             raise HTTPException(
-                status_code=500,
-                detail="Device registration could not be completed",
+                status_code=403,
+                detail="Device access is blocked",
                 headers={"Cache-Control": "no-store"},
             )
 
         expires_at = now + timedelta(minutes=30)
         token = jwt.encode(
             {
-                "sub": payload.device_id,
+                "sub": canonical_id,
                 "scope": "client",
                 "iss": issuer,
                 "aud": CLIENT_AUDIENCE,
