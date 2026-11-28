@@ -188,15 +188,17 @@ class _HomeScreenState extends State<HomeScreen>
         _homeAdIndex = 0;
       });
       _homeRotationTimer?.cancel();
-      if (content.announcements.length > 1 || content.ads.length > 1) {
+      final hasNetworkAd = (content.networkCode ?? '').trim().isNotEmpty;
+      final adCount = content.ads.length + (hasNetworkAd ? 1 : 0);
+      if (content.announcements.length > 1 || adCount > 1) {
         _homeRotationTimer = Timer.periodic(const Duration(seconds: 7), (_) {
           if (!mounted) return;
           setState(() {
             if (content.announcements.length > 1) {
               _announcementIndex = (_announcementIndex + 1) % content.announcements.length;
             }
-            if (content.adMode == 'manual' && content.ads.length > 1) {
-              _homeAdIndex = (_homeAdIndex + 1) % content.ads.length;
+            if (adCount > 1) {
+              _homeAdIndex = (_homeAdIndex + 1) % adCount;
             }
           });
         });
@@ -266,90 +268,80 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildHomeAdPlacement() {
     final content = _homeContent;
     if (content == null) return _buildAdPlaceholder();
-    if (content.adMode == 'network') {
-      final smartLink = (content.networkCode ?? '').trim();
-      final smartLinkUri = Uri.tryParse(smartLink);
-      final validSmartLink = smartLinkUri != null &&
-          smartLinkUri.scheme == 'https' &&
-          smartLinkUri.host.isNotEmpty;
+
+    final smartLink = (content.networkCode ?? '').trim();
+    final smartLinkUri = Uri.tryParse(smartLink);
+    final validSmartLink = smartLinkUri != null &&
+        smartLinkUri.scheme == 'https' &&
+        smartLinkUri.host.isNotEmpty;
+    final totalItems = content.ads.length + (validSmartLink ? 1 : 0);
+    if (totalItems == 0) return _buildAdPlaceholder();
+
+    final index = _homeAdIndex % totalItems;
+    // Manual campaigns and Adsterra remain enabled together. The banner
+    // rotates between published manual ads and the network SmartLink.
+    if (index < content.ads.length) {
+      final ad = content.ads[index];
       return SizedBox(
         height: 104,
         width: double.infinity,
-        child: Material(
-          color: _lightTheme ? const Color(0xFFFFFFFF) : const Color(0xFF14131A),
-          borderRadius: BorderRadius.circular(18),
-          child: InkWell(
+        child: GestureDetector(
+          onTap: () => launchUrl(Uri.parse(ad.targetUrl), mode: LaunchMode.externalApplication),
+          child: ClipRRect(
             borderRadius: BorderRadius.circular(18),
-            onTap: validSmartLink
-                ? () async {
-                    await launchUrl(
-                      smartLinkUri,
-                      mode: LaunchMode.externalApplication,
-                    );
-                  }
-                : null,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: _lightTheme
-                      ? const Color(0xFFD5E0EF)
-                      : const Color(0xFF24232C),
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.ads_click_rounded,
-                    color: validSmartLink
-                        ? const Color(0xFF69A0FF)
-                        : const Color(0xFF777680),
-                    size: 25,
-                  ),
-                  const SizedBox(height: 7),
-                  Text(
-                    validSmartLink
-                        ? (_fa ? 'مشاهده تبلیغ' : 'View advertisement')
-                        : (_fa
-                            ? 'لینک تبلیغ در پنل تنظیم نشده است'
-                            : 'Ad link is not configured'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFF777680),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            child: Stack(fit: StackFit.expand, children: [
+              Image.network(ad.imageUrl, fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: const Color(0xFF141D2B), alignment: Alignment.center,
+                  child: Text(ad.title, maxLines: 2, overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                )),
+              Positioned(left: 0, right: 0, bottom: 0,
+                child: Container(color: const Color(0x99000000), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  child: Text(ad.title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)))),
+            ]),
           ),
         ),
       );
     }
-    if (content.ads.isEmpty) return _buildAdPlaceholder();
-    final ad = content.ads[_homeAdIndex % content.ads.length];
+
     return SizedBox(
       height: 104,
       width: double.infinity,
-      child: GestureDetector(
-        onTap: () => launchUrl(Uri.parse(ad.targetUrl), mode: LaunchMode.externalApplication),
-        child: ClipRRect(
+      child: Material(
+        color: _lightTheme ? const Color(0xFFFFFFFF) : const Color(0xFF14131A),
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
           borderRadius: BorderRadius.circular(18),
-          child: Stack(fit: StackFit.expand, children: [
-            Image.network(ad.imageUrl, fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: const Color(0xFF141D2B), alignment: Alignment.center,
-                child: Text(ad.title, maxLines: 2, overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-              )),
-            Positioned(left: 0, right: 0, bottom: 0,
-              child: Container(color: const Color(0x99000000), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                child: Text(ad.title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)))),
-          ]),
+          onTap: () async {
+            await launchUrl(smartLinkUri!, mode: LaunchMode.externalApplication);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: _lightTheme ? const Color(0xFFD5E0EF) : const Color(0xFF24232C),
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.ads_click_rounded, color: Color(0xFF69A0FF), size: 25),
+                const SizedBox(height: 7),
+                Text(
+                  _fa ? 'تبلیغات' : 'Advertisement',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF777680),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
