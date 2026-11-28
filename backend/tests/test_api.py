@@ -114,13 +114,19 @@ def test_home_content_supports_manual_ads_and_rotating_announcements(client):
     assert public.status_code == 200
     assert public.json()["ads"][0]["id"] == ad_id
     assert public.json()["announcements"][0]["message"] == "Happy new year"
-    assert "network_code" not in public.json() or public.json()["network_code"] is None
+    assert public.json()["network_provider"] == "adsterra"
+    assert public.json()["network_code"] == main.DEFAULT_ADSTERRA_SMARTLINK
+    assert len(public.json()["ads"]) == 1
 
     network = client.put("/api/v1/admin/home-content/settings", headers=headers, json={
         "mode": "network", "network_provider": "adsterra", "network_zone_id": "1234567",
     })
     assert network.status_code == 200
-    assert client.get("/api/v1/home-content").json()["ad_mode"] == "network"
+    after_settings = client.get("/api/v1/home-content").json()
+    assert after_settings["ad_mode"] == "network"
+    assert after_settings["network_provider"] == "adsterra"
+    assert after_settings["network_code"] == main.DEFAULT_ADSTERRA_SMARTLINK
+    assert len(after_settings["ads"]) == 1
     assert client.get("/api/v1/admin/home-content", headers=headers).status_code == 200
 
 
