@@ -101,7 +101,7 @@ jobs:
 
       - name: Build signed release APK
         env:
-          API_BASE_URL: ${{ vars.API_BASE_URL || 'https://nova-vpn-clinet-db.onrender.com' }}
+          API_BASE_URL: ${{ vars.API_BASE_URL || 'https://nova-vpn-db.onrender.com' }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
