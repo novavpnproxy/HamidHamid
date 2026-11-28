@@ -136,9 +136,11 @@ void main() {
         );
       });
 
+      final storage = _MemorySecureStorage()
+        ..deviceId = List.filled(64, 'b').join();
       final api = ApiService(
         client: client,
-        storage: _MemorySecureStorage(),
+        storage: storage,
         baseUrl: 'https://vpn.example',
       );
 
