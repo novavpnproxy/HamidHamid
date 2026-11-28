@@ -14,6 +14,7 @@ dependencies:
   http: ^1.2.2
   url_launcher: ^6.3.1
   shared_preferences: ^2.3.2
+  stable_device_id: ^0.2.0
   flutter_v2ray_client:
     git:
       url: https://github.com/novavpnproxy/flutter_v2ray_client.git
