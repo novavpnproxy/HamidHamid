@@ -158,7 +158,9 @@ void main() {
     });
 
     test('does not expose failed response body in exception', () async {
-      final storage = _MemorySecureStorage()..token = 'client-token';
+      final storage = _MemorySecureStorage()
+        ..token = 'client-token'
+        ..identityMigrated = true;
       final client = MockClient(
         (_) async => http.Response(
           jsonEncode({'detail': 'sensitive backend details'}),
