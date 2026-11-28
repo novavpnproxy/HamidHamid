@@ -50,7 +50,8 @@ class ApiService {
 
   Future<String> _clientToken() async {
     var token = await _storage.readAccessToken();
-    if (token == null || token.trim().isEmpty) {
+    final identityMigrated = await _storage.readStableIdentityMigrated();
+    if (token == null || token.trim().isEmpty || !identityMigrated) {
       try {
         token = await _auth.registerDevice();
       } on AuthException catch (error) {
