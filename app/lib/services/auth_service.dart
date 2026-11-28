@@ -63,6 +63,7 @@ class AuthService {
 
     final token = decoded['access_token'] as String;
     await _storage.writeAccessToken(token);
+    await _storage.writeStableIdentityMigrated(true);
     return token;
   }
 
