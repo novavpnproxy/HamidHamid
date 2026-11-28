@@ -137,7 +137,7 @@ def test_raw_profile_delivery_requires_client_authorization(client):
     assert "config" not in response.json()
 
 
-def test_device_must_be_approved_before_receiving_profile(client):
+def test_new_devices_are_automatically_enabled_and_can_be_security_blocked(client):
     headers = admin_headers(client)
     created = client.post(
         "/api/v1/admin/servers",
@@ -148,42 +148,58 @@ def test_device_must_be_approved_before_receiving_profile(client):
     server_id = created.json()["id"]
 
     device_id = "a" * 64
-    pending = client.post(
-        "/api/v1/client/register",
-        json={"device_id": device_id},
-    )
-    assert pending.status_code == 403
-    assert pending.headers["cache-control"] == "no-store"
-
-    devices = client.get("/api/v1/admin/devices", headers=headers)
-    assert devices.status_code == 200
-    assert any(
-        item["device_id"] == device_id and not item["enabled"]
-        for item in devices.json()["devices"]
-    )
-
-    approved = client.put(
-        f"/api/v1/admin/devices/{device_id}",
-        headers=headers,
-        json={"enabled": True},
-    )
-    assert approved.status_code == 200
-
     registration = client.post(
         "/api/v1/client/register",
         json={"device_id": device_id},
     )
     assert registration.status_code == 200
-    token = registration.json()["access_token"]
+    assert registration.headers["cache-control"] == "no-store"
 
-    profile = client.get(
-        f"/api/v1/servers/{server_id}/config",
-        headers={"Authorization": f"Bearer {token}"},
+    devices = client.get("/api/v1/admin/devices", headers=headers)
+    assert devices.status_code == 200
+    assert any(
+        item["device_id"] == device_id and item["enabled"]
+        for item in devices.json()["devices"]
     )
+
+    token = registration.json()["access_token"]
+    profile_url = f"/api/v1/servers/{server_id}/config"
+    profile = client.get(profile_url, headers={"Authorization": f"Bearer {token}"})
     assert profile.status_code == 200
     assert profile.json()["config"] == "vless://example-profile"
-    assert profile.headers["cache-control"] == "no-store"
 
+    blocked = client.put(
+        f"/api/v1/admin/devices/{device_id}",
+        headers=headers,
+        json={"enabled": False},
+    )
+    assert blocked.status_code == 200
+    assert client.get(profile_url, headers={"Authorization": f"Bearer {token}"}).status_code == 403
+
+
+def test_stable_device_identity_preserves_existing_vox_identity_after_reinstall(client):
+    old_install_id = "a" * 64
+    stable_id = "c" * 64
+    first = client.post(
+        "/api/v1/client/register",
+        json={"device_id": old_install_id, "stable_device_id": stable_id},
+    )
+    assert first.status_code == 200
+
+    # A reinstall has no legacy secure-storage ID; it sends the same stable ID.
+    reinstalled = client.post(
+        "/api/v1/client/register",
+        json={"device_id": stable_id, "stable_device_id": stable_id},
+    )
+    assert reinstalled.status_code == 200
+
+    headers = {"Authorization": f"Bearer {reinstalled.json()['access_token']}"}
+    with main.database() as conn:
+        row = conn.execute(
+            "SELECT device_id FROM client_devices WHERE stable_device_id = ?",
+            (stable_id,),
+        ).fetchone()
+    assert row["device_id"] == old_install_id
 
 def test_admin_routes_require_authentication(client):
     assert client.get("/api/v1/admin/servers").status_code == 401
@@ -277,19 +293,6 @@ def test_postgresql_database_adapter(monkeypatch):
         assert detail.json()["config"] == "vless://example-profile"
 
         device_id = "b" * 64
-        pending = postgres_client.post(
-            "/api/v1/client/register",
-            json={"device_id": device_id},
-        )
-        assert pending.status_code == 403
-
-        approved = postgres_client.put(
-            f"/api/v1/admin/devices/{device_id}",
-            headers=headers,
-            json={"enabled": True},
-        )
-        assert approved.status_code == 200
-
         registration = postgres_client.post(
             "/api/v1/client/register",
             json={"device_id": device_id},
