@@ -95,7 +95,7 @@ jobs:
         run: flutter test
       - name: Build Android debug APK
         env:
-          API_BASE_URL: ${{ vars.API_BASE_URL || 'https://nova-vpn-clinet-db.onrender.com' }}
+          API_BASE_URL: ${{ vars.API_BASE_URL || 'https://nova-vpn-db.onrender.com' }}
         run: |
           if [[ "$API_BASE_URL" != https://* ]]; then
             echo "::error::API_BASE_URL must use HTTPS."
