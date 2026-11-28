@@ -43,7 +43,7 @@ def install_profile_delivery(
     """
     Install device registration, approval and protected profile delivery.
 
-    New devices are disabled until approved by an administrator.
+    New devices are enabled automatically. Access is controlled by subscription entitlement, not manual device approval.
     Admin credentials must never be included in the mobile application.
     """
 
@@ -58,10 +58,12 @@ def install_profile_delivery(
                     device_id TEXT PRIMARY KEY,
                     first_seen_at TEXT NOT NULL,
                     last_seen_at TEXT NOT NULL,
-                    enabled INTEGER NOT NULL DEFAULT 0
+                    enabled INTEGER NOT NULL DEFAULT 1
                 )
                 """
             )
+            # Legacy pending devices are activated as manual approval is retired.
+            conn.execute("UPDATE client_devices SET enabled = 1")
 
     def require_device_id(device_id: str) -> str:
         if not DEVICE_ID_PATTERN.fullmatch(device_id):
@@ -131,10 +133,10 @@ def install_profile_delivery(
                 (device_id,),
             ).fetchone()
 
-        if row is None or not bool(row["enabled"]):
+        if row is None:
             raise HTTPException(
-                status_code=403,
-                detail="Device is not approved",
+                status_code=401,
+                detail="Device registration required",
             )
 
         return claims
@@ -157,8 +159,10 @@ def install_profile_delivery(
                     last_seen_at,
                     enabled
                 )
-                VALUES (?, ?, ?, 0)
-                ON CONFLICT (device_id) DO NOTHING
+                VALUES (?, ?, ?, 1)
+                ON CONFLICT (device_id) DO UPDATE SET
+                    last_seen_at = excluded.last_seen_at,
+                    enabled = 1
                 """,
                 (
                     payload.device_id,
@@ -176,24 +180,12 @@ def install_profile_delivery(
                 (payload.device_id,),
             ).fetchone()
 
-            approved = row is not None and bool(row["enabled"])
+            registered = row is not None
 
-            if approved:
-                conn.execute(
-                    """
-                    UPDATE client_devices
-                    SET last_seen_at = ?
-                    WHERE device_id = ?
-                    """,
-                    (timestamp, payload.device_id),
-                )
-
-        # Raise only after leaving the database context.
-        # This keeps a new pending device saved in the database.
-        if not approved:
+        if not registered:
             raise HTTPException(
-                status_code=403,
-                detail="Device is awaiting approval or disabled",
+                status_code=500,
+                detail="Device registration could not be completed",
                 headers={"Cache-Control": "no-store"},
             )
 
