@@ -187,7 +187,7 @@ class ApiService {
 
     if (response.statusCode == 403) {
       throw const ApiException(
-        'This device is awaiting administrator approval.',
+        'Device access is blocked by the service administrator.',
         statusCode: 403,
       );
     }
@@ -215,7 +215,7 @@ class ApiService {
 
     if (response.statusCode == 403) {
       throw const ApiException(
-        'This device is awaiting administrator approval.',
+        'Device access is blocked by the service administrator.',
         statusCode: 403,
       );
     }
