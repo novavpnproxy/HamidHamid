@@ -188,6 +188,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ));
   }
 
+  Future<void> _openTerms() async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => NovaHelpScreen(
+        language: _language,
+        lightTheme: _lightTheme,
+        termsOnly: true,
+      ),
+    ));
+  }
+
   Future<void> _contactSupport() async {
     final uri = Uri(
       scheme: 'mailto',
@@ -413,12 +423,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     dense: true,
                   ),
                   const Divider(height: 1, color: Color(0xFF2B2933)),
-                  _comingSoonRow(
-                    icon: Icons.description_outlined,
-                    title: _t('terms'),
-                    subtitle: _fa
-                        ? 'پیش از انتشار عمومی باید تکمیل شود'
-                        : 'Must be completed before public release',
+                  ListTile(
+                    leading: const Icon(Icons.description_outlined, color: Color(0xFF4D91FF), size: 20),
+                    title: Text(_fa ? 'شرایط استفاده از خدمات' : 'Terms of Service',
+                        style: TextStyle(color: _lightTheme ? const Color(0xFF263B59) : const Color(0xFFE0DFE7), fontSize: 13, fontWeight: FontWeight.w700)),
+                    subtitle: Text(_fa ? 'قوانین و ضوابط استفاده از Nova VPN' : 'Rules and conditions for using Nova VPN',
+                        style: TextStyle(color: _lightTheme ? const Color(0xFF71839B) : const Color(0xFF9A98A5), fontSize: 10)),
+                    trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF8192A8)),
+                    onTap: () => _openTerms(),
+                    dense: true,
                   ),
                   const Divider(height: 1, color: Color(0xFF2B2933)),
                   ListTile(
