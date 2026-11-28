@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class NovaHelpScreen extends StatelessWidget {
-  const NovaHelpScreen({super.key, required this.language, required this.lightTheme, this.privacyOnly = false});
+  const NovaHelpScreen({super.key, required this.language, required this.lightTheme, this.privacyOnly = false, this.termsOnly = false});
   final String language;
   final bool lightTheme;
   final bool privacyOnly;
+  final bool termsOnly;
   bool get fa => language == 'fa' || language == 'fa-AF';
   Color get bg => lightTheme ? const Color(0xFFF2F6FC) : const Color(0xFF100F15);
   Color get surface => lightTheme ? Colors.white : const Color(0xFF191820);
@@ -45,6 +46,62 @@ class NovaHelpScreen extends StatelessWidget {
     ? 'Nova VPN برای ساخت حساب کاربری، نام، شماره تلفن یا نشانی ایمیل شخصی از شما درخواست نمی‌کند و این اطلاعات هویتی را جمع‌آوری نمی‌کند.\n\nبرای ارائه و مدیریت اتصال VPN، ممکن است داده‌های فنی ضروری مانند شناسه فنی نصب یا دستگاه، وضعیت اتصال و اطلاعات فنی خطا پردازش شود. این داده‌ها برای عیب‌یابی، امنیت و عملکرد سرویس به کار می‌روند و با اطلاعات هویتی مانند نام یا شماره تلفن متفاوت‌اند.\n\nاز وارد کردن اطلاعات حساس در پیام‌های پشتیبانی خودداری کنید. برای پرسش‌های مربوط به حریم خصوصی می‌توانید به mynovavpnproxy@gmail.com ایمیل بزنید.\n\nاین توضیحات باید با شیوه واقعی پردازش داده‌ها در نسخه منتشرشده و زیرساخت سرور هماهنگ باشد.'
     : 'Nova VPN does not ask you for a name, phone number, or personal email address to create an account, and does not collect those identity details.\n\nTo provide and manage the VPN connection, essential technical data such as an installation or device identifier, connection status, and technical error information may be processed. This data supports troubleshooting, security, and service operation; it is different from identity details such as your name or phone number.\n\nPlease do not include sensitive information in support messages. For privacy questions, email mynovavpnproxy@gmail.com.\n\nThis notice must remain consistent with the actual data processing performed by the released app and its server infrastructure.';
 
+  String get termsText => fa
+    ? 'به Nova VPN خوش آمدید. با نصب، باز کردن یا استفاده از برنامه، این شرایط را می‌پذیرید. اگر با آن‌ها موافق نیستید، از برنامه استفاده نکنید.
+
+۱. ماهیت سرویس
+Nova VPN ابزاری برای ایجاد اتصال VPN و عبور دادن بخشی از ترافیک اینترنت دستگاه از سرورهای در دسترس برنامه است. دسترسی به سرورها و امکانات ممکن است با توجه به وضعیت فنی، ظرفیت، نگهداری یا محدودیت‌های شبکه تغییر کند.
+
+۲. استفاده مجاز
+شما متعهد هستید از برنامه برای فعالیت‌های غیرقانونی، نقض حقوق دیگران، کلاهبرداری، انتشار بدافزار، حمله یا اختلال در سامانه‌ها، ارسال هرزنامه یا دور زدن تدابیر امنیتی با هدف آسیب‌رسانی استفاده نکنید. مسئولیت فعالیت‌هایی که از طریق دستگاه و اتصال شما انجام می‌شود بر عهده خود شماست.
+
+۳. دسترسی و پایداری
+برای سرویس، سرعت، دسترس‌پذیری یا اتصال بدون وقفه تضمین نمی‌شود. ممکن است اتصال به دلیل وضعیت اینترنت شما، سرور، تعمیرات یا عوامل خارج از کنترل ما قطع یا محدود شود. در صورت امکان، برای رفع مشکل سرور دیگری را امتحان کنید.
+
+۴. حریم خصوصی و داده‌های فنی
+برای جزئیات داده‌هایی که ممکن است هنگام استفاده پردازش شوند، صفحه «سیاست حفظ حریم خصوصی» را بخوانید. این شرایط جایگزین آن سیاست نیست.
+
+۵. تبلیغات و اشتراک
+برخی امکانات ممکن است رایگان و همراه با تبلیغات ارائه شوند. قابلیت خرید اشتراک در حال حاضر فعال نیست. اگر در آینده اشتراک یا پرداختی ارائه شود، قیمت، مدت، امکانات و شرایط آن پیش از خرید جداگانه اعلام خواهد شد.
+
+۶. تغییر یا توقف سرویس
+ممکن است برای نگهداری، امنیت، بهبود یا دلایل فنی، بخش‌هایی از برنامه یا سرویس تغییر کنند، موقتاً متوقف شوند یا در آینده ارائه نشوند.
+
+۷. مسئولیت و محدودیت‌ها
+شما باید قوانین قابل‌اعمال در محل استفاده خود را رعایت کنید. Nova VPN مجوزی برای انجام فعالیت غیرقانونی ایجاد نمی‌کند. تا حدی که قانون اجازه می‌دهد، سرویس بدون تضمین‌های صریح یا ضمنی ارائه می‌شود و مسئولیت خسارت‌های ناشی از استفاده نادرست، قطع اینترنت یا عوامل خارج از کنترل سرویس بر عهده ارائه‌دهنده نیست.
+
+۸. تغییر شرایط و تماس
+ممکن است این شرایط به‌روزرسانی شوند؛ نسخه جدید در همین صفحه منتشر می‌شود. ادامه استفاده پس از انتشار تغییرات به معنی پذیرش نسخه به‌روز‌شده است. برای پرسش یا گزارش مشکل با mynovavpnproxy@gmail.com تماس بگیرید.
+
+تاریخ آخرین به‌روزرسانی: ۲۸ نوامبر ۲۰۲۶'
+    : 'Welcome to Nova VPN. By installing, opening, or using the app, you agree to these terms. If you do not agree, do not use the app.
+
+1. Service description
+Nova VPN is a tool that creates a VPN connection and routes some of your device’s internet traffic through servers made available by the app. Server and feature availability may change due to technical conditions, capacity, maintenance, or network restrictions.
+
+2. Acceptable use
+You agree not to use the app for unlawful activity, infringement of others’ rights, fraud, malware distribution, attacks or disruption of systems, spam, or bypassing security measures for harmful purposes. You are responsible for activity carried out through your device and connection.
+
+3. Availability and performance
+No guarantee is made regarding speed, availability, or uninterrupted connectivity. Connections may be interrupted or limited by your internet service, server conditions, maintenance, or factors beyond our control. If needed, try another available server.
+
+4. Privacy and technical data
+For details about data that may be processed when using the app, read the Privacy Policy page. These terms do not replace that policy.
+
+5. Ads and subscriptions
+Some features may be provided free of charge and supported by advertising. Subscription purchases are not currently enabled. If subscriptions or payments are introduced later, their price, duration, features, and conditions will be disclosed before purchase.
+
+6. Changes or discontinuation
+Parts of the app or service may be changed, temporarily suspended, or discontinued for maintenance, security, improvement, or technical reasons.
+
+7. Responsibility and limitations
+You must comply with laws applicable where you use the service. Nova VPN does not authorize unlawful activity. To the extent permitted by law, the service is provided without express or implied warranties, and the provider is not responsible for harm caused by misuse, internet outages, or factors outside the service’s control.
+
+8. Changes and contact
+These terms may be updated; the latest version will be published on this page. Continued use after changes are published means you accept the updated terms. For questions or problem reports, contact mynovavpnproxy@gmail.com.
+
+Last updated: November 28, 2026';
+
   Future<void> contact(BuildContext context) async {
     final uri = Uri(scheme: 'mailto', path: 'mynovavpnproxy@gmail.com', queryParameters: {'subject': 'Nova VPN Support'});
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -55,15 +112,15 @@ class NovaHelpScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = privacyOnly ? (fa ? 'سیاست حفظ حریم خصوصی' : 'Privacy Policy') : (fa ? 'سؤالات متداول' : 'Frequently Asked Questions');
+    final title = privacyOnly ? (fa ? 'سیاست حفظ حریم خصوصی' : 'Privacy Policy') : (termsOnly ? (fa ? 'شرایط استفاده از خدمات' : 'Terms of Service') : (fa ? 'سؤالات متداول' : 'Frequently Asked Questions'));
     final questions = fa ? faFaq : enFaq;
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(backgroundColor: bg, foregroundColor: fg, title: Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
-        children: privacyOnly
-          ? [Container(padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF34313D))), child: SelectableText(privacyText, style: TextStyle(color: fg, fontSize: 13, height: 1.8)))]
+        children: privacyOnly || termsOnly
+          ? [Container(padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF34313D))), child: SelectableText(termsOnly ? termsText : privacyText, style: TextStyle(color: fg, fontSize: 13, height: 1.8)))]
           : [
               Text(fa ? 'پاسخ پرسش‌های رایج درباره اتصال و امکانات Nova VPN' : 'Answers to common questions about Nova VPN connections and features.', style: TextStyle(color: muted, fontSize: 12, height: 1.6)),
               const SizedBox(height: 12),
