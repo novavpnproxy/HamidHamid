@@ -12,6 +12,7 @@ class SecureStorageService {
 
   static const String _accessTokenKey = 'nova_access_token';
   static const String _deviceIdKey = 'nova_device_id';
+  static const String _stableIdentityMigratedKey = 'nova_stable_identity_migrated';
 
   Future<void> writeAccessToken(String token) async {
     final value = token.trim();
@@ -44,4 +45,10 @@ class SecureStorageService {
 
   Future<void> clearDeviceId() =>
       _storage.delete(key: _deviceIdKey);
+
+  Future<bool> readStableIdentityMigrated() async =>
+      (await _storage.read(key: _stableIdentityMigratedKey)) == 'true';
+
+  Future<void> writeStableIdentityMigrated(bool value) =>
+      _storage.write(key: _stableIdentityMigratedKey, value: value.toString());
 }
