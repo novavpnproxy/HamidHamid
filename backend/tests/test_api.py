@@ -97,8 +97,8 @@ def test_country_and_city_location_metadata_reaches_app_without_raw_config(clien
 def test_home_content_supports_manual_ads_and_rotating_announcements(client):
     headers = admin_headers(client)
     assert client.get("/api/v1/home-content").json() == {
-        "ad_mode": "manual", "network_provider": None, "network_zone_id": None,
-        "network_code": None, "ads": [], "announcements": [],
+        "ad_mode": "manual", "network_provider": "adsterra", "network_zone_id": None,
+        "network_code": "https://asiafilm.org/4/0a72bc9d378be74f04a1ec6cc70cc6e7", "ads": [], "announcements": [],
     }
     created_ad = client.post("/api/v1/admin/home-content/ads", headers=headers, json={
         "title": "Nova partner", "description": "Offer", "image_url": "https://cdn.example/ad.png",
