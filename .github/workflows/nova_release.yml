@@ -2,9 +2,6 @@ name: NOVA VPN Signed Android Release
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - build/nova-latest
 
 permissions:
   contents: read
