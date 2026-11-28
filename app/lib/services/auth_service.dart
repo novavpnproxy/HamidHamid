@@ -46,7 +46,7 @@ class AuthService {
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw AuthException(
         response.statusCode == 403
-            ? 'This device is awaiting administrator approval.'
+            ? 'Device registration was rejected.'
             : 'Device registration failed.',
         statusCode: response.statusCode,
       );
