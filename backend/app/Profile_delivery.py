@@ -41,7 +41,7 @@ def install_profile_delivery(
     algorithm,
 ):
     """
-    Install device registration, approval and protected profile delivery.
+    Install automatic device registration and protected profile delivery.
 
     New devices are enabled automatically. Access is controlled by subscription entitlement, not manual device approval.
     Admin credentials must never be included in the mobile application.
@@ -62,8 +62,24 @@ def install_profile_delivery(
                 )
                 """
             )
-            # Legacy pending devices are activated as manual approval is retired.
-            conn.execute("UPDATE client_devices SET enabled = 1")
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS app_migrations (
+                    name TEXT PRIMARY KEY,
+                    applied_at TEXT NOT NULL
+                )
+            """)
+            migrated = conn.execute(
+                "SELECT name FROM app_migrations WHERE name = ?",
+                ("remove_manual_device_approval_v1",),
+            ).fetchone()
+            if migrated is None:
+                # Activate legacy pending installs exactly once. Future explicit
+                # security blocks remain effective across service restarts.
+                conn.execute("UPDATE client_devices SET enabled = 1")
+                conn.execute(
+                    "INSERT INTO app_migrations (name, applied_at) VALUES (?, ?)",
+                    ("remove_manual_device_approval_v1", datetime.now(timezone.utc).isoformat()),
+                )
 
     def require_device_id(device_id: str) -> str:
         if not DEVICE_ID_PATTERN.fullmatch(device_id):
@@ -133,10 +149,10 @@ def install_profile_delivery(
                 (device_id,),
             ).fetchone()
 
-        if row is None:
+        if row is None or not bool(row["enabled"]):
             raise HTTPException(
-                status_code=401,
-                detail="Device registration required",
+                status_code=403,
+                detail="Device access is blocked",
             )
 
         return claims
@@ -161,8 +177,7 @@ def install_profile_delivery(
                 )
                 VALUES (?, ?, ?, 1)
                 ON CONFLICT (device_id) DO UPDATE SET
-                    last_seen_at = excluded.last_seen_at,
-                    enabled = 1
+                    last_seen_at = excluded.last_seen_at
                 """,
                 (
                     payload.device_id,
