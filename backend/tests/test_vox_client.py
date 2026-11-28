@@ -22,21 +22,8 @@ def client(tmp_path, monkeypatch):
 
 
 def _approved_client_token(client: TestClient, device_id: str) -> str:
-    login = client.post("/api/v1/admin/login", json={
-        "username": "owner",
-        "password": "correct-horse-battery-staple",
-    })
-    assert login.status_code == 200
-    admin_headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
-
-    pending = client.post("/api/v1/client/register", json={"device_id": device_id})
-    assert pending.status_code == 403
-    approved = client.put(
-        f"/api/v1/admin/devices/{device_id}",
-        headers=admin_headers,
-        json={"enabled": True},
-    )
-    assert approved.status_code == 200
+    # Current product behavior auto-enables new devices; manual admin approval
+    # was intentionally removed. Registration must immediately issue a client token.
     registered = client.post("/api/v1/client/register", json={"device_id": device_id})
     assert registered.status_code == 200
     return registered.json()["access_token"]
