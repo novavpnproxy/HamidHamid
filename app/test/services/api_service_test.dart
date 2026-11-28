@@ -9,6 +9,7 @@ import 'package:nova_vpn_app/storage/secure_storage_service.dart';
 class _MemorySecureStorage extends SecureStorageService {
   String? token;
   String? deviceId;
+  bool identityMigrated = false;
 
   @override
   Future<String?> readAccessToken() async => token;
@@ -34,6 +35,14 @@ class _MemorySecureStorage extends SecureStorageService {
   @override
   Future<void> clearDeviceId() async {
     deviceId = null;
+  }
+
+  @override
+  Future<bool> readStableIdentityMigrated() async => identityMigrated;
+
+  @override
+  Future<void> writeStableIdentityMigrated(bool value) async {
+    identityMigrated = value;
   }
 }
 
