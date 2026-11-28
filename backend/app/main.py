@@ -21,6 +21,8 @@ from jose import JWTError, jwt
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 APP_DIR = Path(__file__).resolve().parent
+
+DEFAULT_ADSTERRA_SMARTLINK = "https://asiafilm.org/4/0a72bc9d378be74f04a1ec6cc70cc6e7"
 DB_PATH = os.getenv("DATABASE_PATH", str(APP_DIR.parent / "nova.sqlite3"))
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "")
@@ -488,9 +490,11 @@ def public_home_content() -> dict:
             ORDER BY sort_order ASC, updated_at DESC""", (now, now)).fetchall()
     return {
         "ad_mode": settings["mode"] if settings else "manual",
-        "network_provider": settings["network_provider"] if settings else None,
+        # Keep Adsterra available alongside manual campaigns. The admin can
+        # later add manual ads without replacing this network destination.
+        "network_provider": (settings["network_provider"] if settings and settings["network_provider"] else "adsterra"),
         "network_zone_id": settings["network_zone_id"] if settings else None,
-        "network_code": settings["network_code"] if settings else None,
+        "network_code": (settings["network_code"] if settings and settings["network_code"] else DEFAULT_ADSTERRA_SMARTLINK),
         "ads": [{k: row[k] for k in ("id", "title", "description", "image_url", "target_url")} for row in ads],
         "announcements": [{"id": row["id"], "message": row["message"]} for row in notices],
     }
