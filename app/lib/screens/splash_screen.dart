@@ -149,7 +149,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     const SizedBox(height: 13),
                     Text(
-                      'اینترنت آزاد را با هم تجربه کنیم',
+                      'اینترنت آزاد را با ما تجربه کنید',
                       textAlign: TextAlign.center,
                       textDirection: TextDirection.rtl,
                       style: _neonStyle(
