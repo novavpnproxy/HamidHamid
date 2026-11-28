@@ -1,0 +1,129 @@
+name: NOVA VPN Signed Android Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nova-signed-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  android-release:
+    name: Build signed Android APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate Android platform files when absent
+        run: |
+          if [ ! -d android ]; then
+            flutter create --platforms=android --org=com.novavpn --project-name=app --no-pub .
+          fi
+
+      - name: Configure release signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              exit 1
+            fi
+          done
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/nova-release-key.jks
+          test -s android/app/nova-release-key.jks
+          cat > android/key.properties <<EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=app/nova-release-key.jks
+          EOF
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("android/app/build.gradle.kts")
+          text = path.read_text()
+          if 'create("novaRelease")' not in text:
+              marker = "    buildTypes {"
+              signing = '''    signingConfigs {
+                  create("novaRelease") {
+                      keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                      keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+                      storeFile = file("nova-release-key.jks")
+                      storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                  }
+              }
+
+          '''
+              if marker not in text:
+                  raise SystemExit("Could not locate buildTypes block in generated Gradle Kotlin file.")
+              text = text.replace(marker, signing + marker, 1)
+          text = text.replace('signingConfig = signingConfigs.getByName("debug")', 'signingConfig = signingConfigs.getByName("novaRelease")')
+          if 'signingConfig = signingConfigs.getByName("novaRelease")' not in text:
+              raise SystemExit("Release signing configuration was not attached.")
+          path.write_text(text)
+          PY
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Generate NOVA Android launcher icons
+        run: dart run flutter_launcher_icons
+
+      - name: Apply NOVA native launch screen theme
+        run: bash tool/configure_android_splash.sh
+
+      - name: Run Flutter tests
+        run: flutter test
+
+      - name: Build signed release APK
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL || 'https://nova-vpn-clinet-db.onrender.com' }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [[ "$API_BASE_URL" != https://* ]]; then
+            echo "::error::API_BASE_URL must use HTTPS."
+            exit 1
+          fi
+          flutter build apk --release --dart-define=API_BASE_URL="$API_BASE_URL"
+
+      - name: Verify APK signature
+        run: |
+          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n1)/apksigner" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-vpn-signed-release
+          path: app/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
