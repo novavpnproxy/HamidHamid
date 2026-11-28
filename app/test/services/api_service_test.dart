@@ -79,7 +79,7 @@ void main() {
     });
 
     test('registers the device before requesting its VPN profile', () async {
-      final storage = _MemorySecureStorage();
+      final storage = _MemorySecureStorage()..deviceId = List.filled(64, 'a').join();
       var registered = false;
       final client = MockClient((request) async {
         if (request.url.path == '/api/v1/client/register') {
@@ -117,7 +117,7 @@ void main() {
       api.close();
     });
 
-    test('reports pending administrator approval without requesting profile',
+    test('reports a rejected registration without requesting profile',
         () async {
       final client = MockClient((request) async {
         expect(request.url.path, '/api/v1/client/register');
@@ -141,7 +141,7 @@ void main() {
               .having(
                 (error) => error.message,
                 'approval message',
-                contains('awaiting administrator approval'),
+                contains('registration was rejected'),
               ),
         ),
       );
